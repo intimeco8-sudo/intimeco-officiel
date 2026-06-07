@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
 import { X, Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { getProductImage } from '../utils/productImages';
+import { DEFAULT_STORE_SETTINGS, getNumberSetting } from '../hooks/useStoreSettings';
 
-export default function CartDrawer({ isOpen, onClose, cartItems, onUpdateQty, onRemove, onCheckout }) {
+export default function CartDrawer({
+  isOpen,
+  onClose,
+  cartItems,
+  onUpdateQty,
+  onRemove,
+  onCheckout,
+  settings = DEFAULT_STORE_SETTINGS,
+}) {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
 
@@ -13,8 +22,11 @@ export default function CartDrawer({ isOpen, onClose, cartItems, onUpdateQty, on
   }, [isOpen]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const deliveryBaseFee = getNumberSetting(settings, 'delivery_fee', 500);
+  const freeDeliveryThreshold = getNumberSetting(settings, 'free_delivery_threshold', 3000);
+  const deliveryFee = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold ? 0 : deliveryBaseFee;
   const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
-  const total = subtotal - discount;
+  const total = subtotal + deliveryFee - discount;
 
   function applyPromo() {
     if (promoCode.trim().toLowerCase() === 'intime10') {
@@ -197,6 +209,15 @@ export default function CartDrawer({ isOpen, onClose, cartItems, onUpdateQty, on
                 <span>Sous-total</span>
                 <span>{subtotal.toLocaleString('fr-DZ')} DZD</span>
               </div>
+              <div className="flex justify-between font-sans text-[#5A6080]" style={{ fontSize: '14px' }}>
+                <span>Livraison</span>
+                <span>{deliveryFee === 0 ? 'Gratuite' : `${deliveryFee.toLocaleString('fr-DZ')} DZD`}</span>
+              </div>
+              {freeDeliveryThreshold > 0 && subtotal < freeDeliveryThreshold && (
+                <p className="font-sans text-[#9CA3AF]" style={{ fontSize: '12px' }}>
+                  Livraison gratuite des {freeDeliveryThreshold.toLocaleString('fr-DZ')} DZD d'achat
+                </p>
+              )}
               {promoApplied && (
                 <div className="flex justify-between font-sans text-[#E63946]" style={{ fontSize: '14px' }}>
                   <span>Reduction (10%)</span>

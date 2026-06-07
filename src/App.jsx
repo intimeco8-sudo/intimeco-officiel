@@ -194,6 +194,7 @@ export default function App() {
         onUpdateQty={updateQty}
         onRemove={removeFromCart}
         onCheckout={handleCheckout}
+        settings={storeSettings}
       />
 
       {/* Product detail */}

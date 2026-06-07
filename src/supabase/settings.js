@@ -27,7 +27,7 @@ export async function fetchSettingByKey(key) {
 export async function updateSetting(key, value) {
     const { data, error } = await supabase
         .from('settings')
-        .upsert({ key, value, updated_at: new Date().toISOString() })
+        .upsert({ key, value: String(value ?? ''), updated_at: new Date().toISOString() }, { onConflict: 'key' })
         .select()
         .single();
 
@@ -38,13 +38,13 @@ export async function updateSetting(key, value) {
 export async function bulkUpdateSettings(settingsObj) {
     const updates = Object.entries(settingsObj).map(([key, value]) => ({
         key,
-        value,
+        value: String(value ?? ''),
         updated_at: new Date().toISOString(),
     }));
 
     const { data, error } = await supabase
         .from('settings')
-        .upsert(updates)
+        .upsert(updates, { onConflict: 'key' })
         .select();
 
     if (error) throw error;

@@ -1,12 +1,19 @@
 import { supabase } from './client';
 
 export async function validatePromoCode(code, orderTotal) {
+    const normalizedCode = code.trim().toUpperCase();
+    const numericOrderTotal = Number.parseFloat(orderTotal);
+
+    if (!normalizedCode || !Number.isFinite(numericOrderTotal) || numericOrderTotal < 0) {
+        return { valid: false, message: 'Code invalide' };
+    }
+
     const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
-        .eq('code', code.toUpperCase())
+        .eq('code', normalizedCode)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
     if (error || !data) {
         return { valid: false, message: 'Code invalide' };
@@ -20,19 +27,23 @@ export async function validatePromoCode(code, orderTotal) {
         return { valid: false, message: 'Code epuise' };
     }
 
-    if (orderTotal < data.min_order) {
+    const minOrder = Number.parseFloat(data.min_order) || 0;
+    if (numericOrderTotal < minOrder) {
         return {
             valid: false,
-            message: `Commande minimum : ${data.min_order.toLocaleString('fr-DZ')} DZD`,
+            message: `Commande minimum : ${minOrder.toLocaleString('fr-DZ')} DZD`,
         };
     }
 
     let discountAmount = 0;
+    const discountValue = Number.parseFloat(data.discount_value) || 0;
     if (data.discount_type === 'percent') {
-        discountAmount = Math.round((orderTotal * data.discount_value) / 100);
+        discountAmount = Math.round((numericOrderTotal * discountValue) / 100);
     } else if (data.discount_type === 'fixed') {
-        discountAmount = data.discount_value;
+        discountAmount = discountValue;
     }
+
+    discountAmount = Math.min(discountAmount, numericOrderTotal);
 
     return { valid: true, data, discountAmount };
 }

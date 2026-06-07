@@ -76,7 +76,7 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
     const subtotal = cartItems.reduce((s, i) => s + i.price * i.qty, 0);
     const deliveryBaseFee = getNumberSetting(settings, 'delivery_fee', 500);
     const freeDeliveryThreshold = getNumberSetting(settings, 'free_delivery_threshold', 3000);
-    const deliveryFee = subtotal >= freeDeliveryThreshold ? 0 : deliveryBaseFee;
+    const deliveryFee = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold ? 0 : deliveryBaseFee;
     const discount = promoApplied && promoValidation?.valid ? promoValidation.discountAmount : 0;
     const total = subtotal + deliveryFee - discount;
 
@@ -108,7 +108,7 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
                 wilaya: form.wilaya,
                 commune: form.commune,
                 paymentMethod: form.payment,
-                promoCode: promoApplied ? form.promoCode : null,
+                promoCode: promoApplied ? form.promoCode.trim().toUpperCase() : null,
                 discountAmount: discount,
                 subtotal: subtotal + deliveryFee,
                 total,
