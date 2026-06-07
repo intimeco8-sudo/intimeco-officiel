@@ -2,8 +2,80 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { fetchProducts, toggleProductActive, deleteProduct } from '../../supabase/products';
 import { getProductImage } from '../../utils/productImages';
+import { normalizeProductVariants } from '../../utils/productVariants';
 import ProductForm from './ProductForm';
 import ConfirmDialog from '../components/ConfirmDialog';
+
+function getColorStockRows(product) {
+    const variants = normalizeProductVariants(product);
+
+    if (variants.length === 0) {
+        return [];
+    }
+
+    return variants.map((variant) => {
+        const stockBySize = variant.stockBySize && typeof variant.stockBySize === 'object' ? variant.stockBySize : {};
+        const total = Object.values(stockBySize).reduce(
+            (sum, value) => sum + (Number.parseInt(value, 10) || 0),
+            0
+        );
+        const sizes = Object.entries(stockBySize)
+            .filter(([, value]) => (Number.parseInt(value, 10) || 0) > 0)
+            .map(([size, value]) => `${size}: ${value}`)
+            .join(', ');
+
+        return {
+            color: variant.color,
+            name: variant.colorName,
+            hex: variant.colorHex,
+            total,
+            sizes,
+        };
+    });
+}
+
+function ColorStockSummary({ product, align = 'left' }) {
+    const rows = getColorStockRows(product);
+    const total = rows.length > 0
+        ? rows.reduce((sum, row) => sum + row.total, 0)
+        : Number.parseInt(product.stock, 10) || 0;
+
+    return (
+        <div className={`flex flex-col gap-1 ${align === 'center' ? 'items-center' : 'items-start'}`}>
+            <span className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '13px' }}>
+                Total: {total}
+            </span>
+            {rows.length > 0 ? (
+                <div className={`flex flex-wrap gap-1.5 ${align === 'center' ? 'justify-center' : 'justify-start'}`}>
+                    {rows.map((row) => (
+                        <span
+                            key={row.color}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#F9D7DA] bg-white px-2 py-1 font-sans text-[#5A6080]"
+                            style={{ fontSize: '12px' }}
+                            title={row.sizes || 'Aucun stock par taille'}
+                        >
+                            <span
+                                className="rounded-full border"
+                                style={{
+                                    width: '10px',
+                                    height: '10px',
+                                    background: row.hex,
+                                    borderColor: row.color === 'blanc' || row.color === 'ivoire' ? '#D1D5DB' : row.hex,
+                                }}
+                            />
+                            <span>{row.name}</span>
+                            <strong className="text-[#1C2340]">{row.total}</strong>
+                        </span>
+                    ))}
+                </div>
+            ) : (
+                <span className="font-sans text-[#9CA3AF]" style={{ fontSize: '12px' }}>
+                    Aucune couleur configuree
+                </span>
+            )}
+        </div>
+    );
+}
 
 export default function Products() {
     const [products, setProducts] = useState([]);
@@ -222,9 +294,9 @@ export default function Products() {
                                                 <p className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
                                                     {parseFloat(product.price).toLocaleString('fr-DZ')} DZD
                                                 </p>
-                                                <p className="font-sans text-[#9CA3AF]" style={{ fontSize: '12px' }}>
-                                                    Stock: {product.stock}
-                                                </p>
+                                                <div className="mt-2">
+                                                    <ColorStockSummary product={product} />
+                                                </div>
                                             </div>
                                             <ProductActiveToggle product={product} />
                                         </div>
@@ -251,7 +323,7 @@ export default function Products() {
                                         Prix
                                     </th>
                                     <th className="text-center font-sans font-semibold text-[#1C2340] py-3 px-2" style={{ fontSize: '13px' }}>
-                                        Stock
+                                        Stock par couleur
                                     </th>
                                     <th className="text-center font-sans font-semibold text-[#1C2340] py-3 px-2" style={{ fontSize: '13px' }}>
                                         Badge
@@ -283,8 +355,8 @@ export default function Products() {
                                         <td className="font-sans font-semibold text-right text-[#1C2340] py-3 px-2" style={{ fontSize: '14px' }}>
                                             {parseFloat(product.price).toLocaleString('fr-DZ')} DZD
                                         </td>
-                                        <td className="font-sans text-center text-[#5A6080] py-3 px-2" style={{ fontSize: '14px' }}>
-                                            {product.stock}
+                                        <td className="py-3 px-2">
+                                            <ColorStockSummary product={product} align="center" />
                                         </td>
                                         <td className="text-center py-3 px-2">
                                             {product.badge && (
