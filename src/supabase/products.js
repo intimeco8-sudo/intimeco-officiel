@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { deleteProductImages } from './storage';
+import { getProductVariantImages } from '../utils/productVariants';
 
 export async function fetchProducts({
     category = null,
@@ -81,13 +82,13 @@ export async function updateProduct(id, updates) {
 export async function deleteProduct(id) {
     const { data: product, error: fetchError } = await supabase
         .from('products')
-        .select('images')
+        .select('images, variant_options')
         .eq('id', id)
         .single();
 
     if (fetchError) throw fetchError;
 
-    await deleteProductImages(product?.images);
+    await deleteProductImages([...(product?.images || []), ...getProductVariantImages(product)]);
 
     const { error } = await supabase
         .from('products')

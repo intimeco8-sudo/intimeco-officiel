@@ -19,6 +19,7 @@ import ProductDetailPage from './components/ProductDetailPage';
 import CartDrawer from './components/CartDrawer';
 import CheckoutPage from './components/CheckoutPageWithSupabase';
 import Toast from './components/Toast';
+import { getAvailableSizesForColor, getProductColorOptions } from './utils/productVariants';
 
 let toastCounter = 0;
 
@@ -49,13 +50,23 @@ export default function App() {
 
   // Cart operations
   function addToCart(product, selectedSize, selectedColor, qty = 1) {
+    const colorOptions = getProductColorOptions(product);
+    const fallbackColor = selectedColor ?? colorOptions[0]?.color ?? product.colors?.[0] ?? null;
+    const availableSizes = fallbackColor ? getAvailableSizesForColor(product, fallbackColor) : [];
+    const fallbackSize = selectedSize ?? availableSizes[0] ?? product.sizes?.[0] ?? null;
+
+    if (!fallbackSize || (!selectedSize && fallbackColor && availableSizes.length === 0)) {
+      addToast('Produit indisponible');
+      return;
+    }
+
     setCartItems((prev) => {
       const existing = prev.find(
-        (i) => i.id === product.id && i.selectedSize === selectedSize && i.selectedColor === selectedColor
+        (i) => i.id === product.id && i.selectedSize === fallbackSize && i.selectedColor === fallbackColor
       );
       if (existing) {
         return prev.map((i) =>
-          i.id === product.id && i.selectedSize === selectedSize && i.selectedColor === selectedColor
+          i.id === product.id && i.selectedSize === fallbackSize && i.selectedColor === fallbackColor
             ? { ...i, qty: i.qty + qty }
             : i
         );
@@ -64,8 +75,8 @@ export default function App() {
         ...prev,
         {
           ...product,
-          selectedSize: selectedSize ?? (product.sizes[0] || null),
-          selectedColor: selectedColor ?? (product.colors[0] || null),
+          selectedSize: fallbackSize,
+          selectedColor: fallbackColor,
           qty,
         },
       ];

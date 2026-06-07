@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { getProductImage } from '../utils/productImages';
-
-const COLOR_MAP = {
-  noir:  '#1C1C1C',
-  rose:  '#F4A7B9',
-  blanc: '#F8F8F8',
-  nude:  '#D4A99A',
-  rouge: '#E63946',
-  lilas: '#C0A0D0',
-};
+import { getProductColorOptions } from '../utils/productVariants';
 
 function BadgeChip({ badge }) {
   if (!badge) return null;
@@ -35,7 +27,7 @@ function BadgeChip({ badge }) {
 export default function ProductCard({ product, onAddToCart, onWishlist, isWishlisted, onCardClick }) {
   const [heartPulsing, setHeartPulsing] = useState(false);
   const productImage = getProductImage(product);
-  const colors = Array.isArray(product.colors) ? product.colors : [];
+  const colors = getProductColorOptions(product);
 
   function handleWishlist(e) {
     e.stopPropagation();
@@ -100,15 +92,15 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
         <div className="flex items-center gap-1">
           {colors.map((c) => (
             <span
-              key={c}
+              key={c.color}
               className="rounded-full border border-[#F9D7DA]"
               style={{
                 width: '10px',
                 height: '10px',
-                background: COLOR_MAP[c] || '#ccc',
+                background: c.colorHex,
                 display: 'inline-block',
               }}
-              title={c}
+              title={c.colorName}
             />
           ))}
         </div>

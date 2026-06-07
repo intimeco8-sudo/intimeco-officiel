@@ -14,12 +14,15 @@ CREATE TABLE IF NOT EXISTS products (
   sizes text[],
   colors text[],
   images text[],
+  variant_options jsonb DEFAULT '[]'::jsonb,
   badge text,
   stock integer DEFAULT 0,
   is_active boolean DEFAULT true,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_options jsonb DEFAULT '[]'::jsonb;
 
 ALTER TABLE products DROP CONSTRAINT IF EXISTS products_category_check;
 ALTER TABLE products ADD CONSTRAINT products_category_check
@@ -367,9 +370,28 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
+DECLARE
+  updated_variants jsonb;
 BEGIN
+  SELECT jsonb_agg(
+    CASE
+      WHEN variant->>'color' = NEW.color AND NEW.size IS NOT NULL THEN
+        jsonb_set(
+          variant,
+          ARRAY['stockBySize', NEW.size],
+          to_jsonb(GREATEST(0, COALESCE((variant->'stockBySize'->>NEW.size)::integer, 0) - NEW.quantity))
+        )
+      ELSE variant
+    END
+  )
+  INTO updated_variants
+  FROM public.products product,
+       jsonb_array_elements(COALESCE(product.variant_options, '[]'::jsonb)) variant
+  WHERE product.id = NEW.product_id;
+
   UPDATE public.products
-  SET stock = GREATEST(0, COALESCE(stock, 0) - NEW.quantity),
+  SET variant_options = COALESCE(updated_variants, variant_options),
+      stock = GREATEST(0, COALESCE(stock, 0) - NEW.quantity),
       updated_at = now()
   WHERE id = NEW.product_id;
 

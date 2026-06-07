@@ -2,10 +2,31 @@ import { useState } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { createProduct, updateProduct } from '../../supabase/products';
 import { uploadProductImage, deleteProductImage } from '../../supabase/storage';
+import { COLOR_PALETTE, getColorMeta, getTotalVariantStock, normalizeProductVariants } from '../../utils/productVariants';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '85B', '90C', '95D'];
-const COLORS = ['noir', 'rose', 'blanc', 'nude', 'rouge', 'lilas'];
 const CATEGORIES = ['Soutien-gorge', 'Ensembles', 'Culottes', 'Pyjamas', 'Nuisettes', 'Corsets'];
+
+function createVariant(color, sizes = []) {
+    const meta = getColorMeta(color);
+    return {
+        color,
+        colorName: meta.name,
+        colorHex: meta.hex,
+        image: '',
+        stockBySize: Object.fromEntries(sizes.map((size) => [size, 0])),
+    };
+}
+
+function syncVariantSizes(variants, sizes) {
+    return variants.map((variant) => {
+        const stockBySize = {};
+        sizes.forEach((size) => {
+            stockBySize[size] = Number.parseInt(variant.stockBySize?.[size], 10) || 0;
+        });
+        return { ...variant, stockBySize };
+    });
+}
 
 function restoreScrollPosition(container, scrollTop) {
     if (!container) return;
@@ -26,10 +47,10 @@ export default function ProductForm({ product, onClose }) {
         price: product?.price || '',
         original_price: product?.original_price || '',
         sizes: Array.isArray(product?.sizes) ? product.sizes : [],
-        colors: Array.isArray(product?.colors) ? product.colors : [],
         badge: product?.badge || '',
         stock: product?.stock || 0,
         images: Array.isArray(product?.images) ? product.images : [],
+        variant_options: normalizeProductVariants(product),
         is_active: product?.is_active !== false,
     });
     const [uploading, setUploading] = useState(false);
@@ -40,7 +61,8 @@ export default function ProductForm({ product, onClose }) {
         const name = formData.name.trim();
         const price = Number.parseFloat(formData.price);
         const originalPrice = formData.original_price === '' ? null : Number.parseFloat(formData.original_price);
-        const stock = Number.parseInt(formData.stock, 10);
+        const variants = syncVariantSizes(formData.variant_options, formData.sizes);
+        const stock = getTotalVariantStock(variants);
 
         if (!name) {
             return { error: 'Ajoutez le nom du produit.' };
@@ -54,8 +76,12 @@ export default function ProductForm({ product, onClose }) {
             return { error: 'Ajoutez un prix original valide ou laissez le champ vide.' };
         }
 
-        if (!Number.isInteger(stock) || stock < 0) {
-            return { error: 'Ajoutez un stock valide.' };
+        if (formData.sizes.length === 0) {
+            return { error: 'Selectionnez au moins une taille.' };
+        }
+
+        if (variants.length === 0) {
+            return { error: 'Selectionnez au moins une couleur.' };
         }
 
         return {
@@ -67,8 +93,9 @@ export default function ProductForm({ product, onClose }) {
                 original_price: originalPrice,
                 stock,
                 sizes: Array.isArray(formData.sizes) ? formData.sizes : [],
-                colors: Array.isArray(formData.colors) ? formData.colors : [],
+                colors: variants.map((variant) => variant.color),
                 images: Array.isArray(formData.images) ? formData.images : [],
+                variant_options: variants,
                 badge: formData.badge || null,
             },
         };
@@ -109,6 +136,61 @@ export default function ProductForm({ product, onClose }) {
         }
     };
 
+    const handleVariantImageUpload = async (color, e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+        setFormError('');
+        try {
+            const imageUrl = await uploadProductImage(file);
+            const previousImage = formData.variant_options.find((variant) => variant.color === color)?.image;
+            if (previousImage) {
+                await deleteProductImage(previousImage);
+            }
+            setFormData((prev) => ({
+                ...prev,
+                variant_options: prev.variant_options.map((variant) =>
+                    variant.color === color ? { ...variant, image: imageUrl } : variant
+                ),
+            }));
+        } catch (error) {
+            setFormError(error?.message || 'Erreur lors du telechargement de l\'image couleur');
+        } finally {
+            e.target.value = '';
+            setUploading(false);
+        }
+    };
+
+    const handleVariantImageDelete = async (color) => {
+        const imageUrl = formData.variant_options.find((variant) => variant.color === color)?.image;
+        if (!imageUrl) return;
+
+        try {
+            await deleteProductImage(imageUrl);
+            setFormData((prev) => ({
+                ...prev,
+                variant_options: prev.variant_options.map((variant) =>
+                    variant.color === color ? { ...variant, image: '' } : variant
+                ),
+            }));
+        } catch (error) {
+            setFormError(error?.message || 'Erreur lors de la suppression de l\'image couleur');
+        }
+    };
+
+    const updateVariantStock = (color, size, value) => {
+        const stock = Math.max(0, Number.parseInt(value, 10) || 0);
+        setFormData((prev) => ({
+            ...prev,
+            variant_options: prev.variant_options.map((variant) =>
+                variant.color === color
+                    ? { ...variant, stockBySize: { ...variant.stockBySize, [size]: stock } }
+                    : variant
+            ),
+        }));
+    };
+
     const handleImageReorder = (index, direction) => {
         const newImages = [...formData.images];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -117,13 +199,25 @@ export default function ProductForm({ product, onClose }) {
         setFormData((prev) => ({ ...prev, images: newImages }));
     };
 
-    const toggleArray = (key, value) => {
-        setFormData((prev) => ({
-            ...prev,
-            [key]: prev[key].includes(value)
-                ? prev[key].filter((v) => v !== value)
-                : [...prev[key], value],
-        }));
+    const toggleSize = (size) => {
+        setFormData((prev) => {
+            const sizes = prev.sizes.includes(size)
+                ? prev.sizes.filter((item) => item !== size)
+                : [...prev.sizes, size];
+            return { ...prev, sizes, variant_options: syncVariantSizes(prev.variant_options, sizes) };
+        });
+    };
+
+    const toggleColor = (color) => {
+        setFormData((prev) => {
+            const exists = prev.variant_options.some((variant) => variant.color === color);
+            return {
+                ...prev,
+                variant_options: exists
+                    ? prev.variant_options.filter((variant) => variant.color !== color)
+                    : [...prev.variant_options, createVariant(color, prev.sizes)],
+            };
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -229,19 +323,13 @@ export default function ProductForm({ product, onClose }) {
                                 </select>
                             </div>
 
-                            <div>
-                                <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
-                                    Stock
-                                </label>
-                                <input
-                                    type="number"
-                                    value={formData.stock}
-                                    onChange={(e) => setFormData((prev) => ({ ...prev, stock: e.target.value }))}
-                                    min="0"
-                                    aria-invalid={!Number.isInteger(Number.parseInt(formData.stock, 10)) || Number.parseInt(formData.stock, 10) < 0}
-                                    className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
-                                    style={{ fontSize: '14px' }}
-                                />
+                            <div className="rounded-lg border border-[#F9D7DA] bg-[#FDE8EC] px-4 py-3">
+                                <p className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
+                                    Stock total
+                                </p>
+                                <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '13px' }}>
+                                    {getTotalVariantStock(formData.variant_options)} pieces, calcule depuis les variantes.
+                                </p>
                             </div>
                         </div>
 
@@ -328,7 +416,7 @@ export default function ProductForm({ product, onClose }) {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-5">
                             <div>
                                 <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
                                     Tailles
@@ -340,7 +428,7 @@ export default function ProductForm({ product, onClose }) {
                                             <button
                                                 key={size}
                                                 type="button"
-                                                onClick={() => toggleArray('sizes', size)}
+                                                onClick={() => toggleSize(size)}
                                                 className="px-4 py-2 rounded-full border font-sans font-medium transition-all"
                                                 style={{
                                                     fontSize: '13px',
@@ -360,28 +448,134 @@ export default function ProductForm({ product, onClose }) {
                                 <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
                                     Couleurs
                                 </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {COLORS.map((color) => {
-                                        const isSelected = formData.colors.includes(color);
+                                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+                                    {COLOR_PALETTE.map((color) => {
+                                        const isSelected = formData.variant_options.some((variant) => variant.color === color.value);
                                         return (
                                             <button
-                                                key={color}
+                                                key={color.value}
                                                 type="button"
-                                                onClick={() => toggleArray('colors', color)}
-                                                className="px-4 py-2 rounded-full border font-sans font-medium transition-all"
+                                                onClick={() => toggleColor(color.value)}
+                                                className="flex flex-col items-center gap-1 rounded-lg border px-2 py-2 font-sans transition-all"
                                                 style={{
-                                                    fontSize: '13px',
-                                                    background: isSelected ? '#1C2340' : 'transparent',
-                                                    color: isSelected ? 'white' : '#1C2340',
                                                     borderColor: isSelected ? '#1C2340' : '#EBB4BB',
+                                                    background: isSelected ? '#FDE8EC' : 'white',
                                                 }}
+                                                aria-pressed={isSelected}
                                             >
-                                                {color}
+                                                <span
+                                                    className="rounded-full border"
+                                                    style={{
+                                                        width: '24px',
+                                                        height: '24px',
+                                                        background: color.hex,
+                                                        borderColor: color.value === 'blanc' || color.value === 'ivoire' ? '#D1D5DB' : color.hex,
+                                                        boxShadow: isSelected ? '0 0 0 2px #1C2340' : 'none',
+                                                    }}
+                                                />
+                                                <span className="text-[#1C2340] leading-tight" style={{ fontSize: '11px' }}>
+                                                    {color.name}
+                                                </span>
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
+
+                            {formData.variant_options.length > 0 && (
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <label className="block font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
+                                            Stock et image par couleur
+                                        </label>
+                                        <span className="font-sans text-[#5A6080]" style={{ fontSize: '12px' }}>
+                                            Total: {getTotalVariantStock(formData.variant_options)}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {formData.variant_options.map((variant) => (
+                                            <div key={variant.color} className="rounded-xl border border-[#F9D7DA] p-4 bg-white">
+                                                <div className="flex flex-col sm:flex-row gap-4">
+                                                    <div className="sm:w-44 flex-none">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span
+                                                                className="rounded-full border"
+                                                                style={{
+                                                                    width: '18px',
+                                                                    height: '18px',
+                                                                    background: variant.colorHex,
+                                                                    borderColor: variant.color === 'blanc' || variant.color === 'ivoire' ? '#D1D5DB' : variant.colorHex,
+                                                                }}
+                                                            />
+                                                            <p className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
+                                                                {variant.colorName}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="relative h-36 rounded-lg border border-dashed border-[#EBB4BB] overflow-hidden bg-[#FDE8EC]">
+                                                            {variant.image ? (
+                                                                <>
+                                                                    <img src={variant.image} alt={variant.colorName} className="w-full h-full object-cover" />
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleVariantImageDelete(variant.color)}
+                                                                        className="absolute top-2 right-2 p-2 bg-[#E63946] rounded-full"
+                                                                        aria-label={`Supprimer l'image ${variant.colorName}`}
+                                                                    >
+                                                                        <Trash2 size={14} color="white" strokeWidth={1.8} />
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-3">
+                                                                    <Upload size={24} color="#9CA3AF" strokeWidth={1.8} />
+                                                                    <p className="font-sans text-[#9CA3AF]" style={{ fontSize: '12px' }}>
+                                                                        Image {variant.colorName}
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/jpeg,image/png,image/webp"
+                                                                onChange={(e) => handleVariantImageUpload(variant.color, e)}
+                                                                disabled={uploading}
+                                                                aria-label={`Telecharger l'image ${variant.colorName}`}
+                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-1">
+                                                        {formData.sizes.length === 0 ? (
+                                                            <p className="font-sans text-[#9CA3AF]" style={{ fontSize: '13px' }}>
+                                                                Selectionnez d'abord les tailles.
+                                                            </p>
+                                                        ) : (
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                                {formData.sizes.map((size) => (
+                                                                    <label key={`${variant.color}-${size}`} className="block">
+                                                                        <span className="block font-sans font-semibold text-[#1C2340] mb-1" style={{ fontSize: '12px' }}>
+                                                                            {size}
+                                                                        </span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={variant.stockBySize?.[size] ?? 0}
+                                                                            onChange={(e) => updateVariantStock(variant.color, size, e.target.value)}
+                                                                            className="w-full border border-[#EBB4BB] rounded-lg px-3 py-2 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                                                            style={{ fontSize: '13px' }}
+                                                                        />
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="rounded-xl border border-[#F9D7DA] bg-[#FDE8EC] px-4 py-3">
@@ -389,13 +583,13 @@ export default function ProductForm({ product, onClose }) {
                                 4. Images et statut
                             </h4>
                             <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '12px' }}>
-                                La premiere image sera utilisee comme image principale.
+                                Les images couleur sont utilisees en premier. Ajoutez ici des images supplementaires si besoin.
                             </p>
                         </div>
 
                         <div>
                             <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
-                                Images
+                                Images supplementaires
                             </label>
                             <div className="relative border-2 border-dashed border-[#EBB4BB] rounded-lg p-6 hover:bg-[#FDE8EC] transition-colors">
                                 <input

@@ -1,15 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Heart, Minus, Plus, ChevronDown } from 'lucide-react';
 import { getProductImages } from '../utils/productImages';
-
-const COLOR_MAP = {
-  noir:  '#1C1C1C',
-  rose:  '#F4A7B9',
-  blanc: '#F8F8F8',
-  nude:  '#D4A99A',
-  rouge: '#E63946',
-  lilas: '#C0A0D0',
-};
+import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } from '../utils/productVariants';
 
 function Accordion({ title, children }) {
   const [open, setOpen] = useState(false);
@@ -41,7 +33,7 @@ function Accordion({ title, children }) {
 export default function ProductDetailPage({ product, onClose, onAddToCart, onWishlist, wishlist }) {
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] ?? null);
+  const [selectedColor, setSelectedColor] = useState(getProductColorOptions(product)?.[0]?.color ?? null);
   const [qty, setQty] = useState(1);
   const [heartPulsing, setHeartPulsing] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -51,7 +43,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
     if (!product) return;
     setCurrentImage(0);
     setSelectedSize(null);
-    setSelectedColor(product.colors?.[0] ?? null);
+    setSelectedColor(getProductColorOptions(product)?.[0]?.color ?? null);
     setQty(1);
   }, [product]);
 
@@ -76,7 +68,10 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
   const productImages = getProductImages(product);
   const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
-  const productColors = Array.isArray(product.colors) ? product.colors : [];
+  const productColors = getProductColorOptions(product);
+  const availableSizes = selectedColor ? getAvailableSizesForColor(product, selectedColor) : productSizes;
+  const selectedStock = getVariantStock(product, selectedColor, selectedSize);
+  const canAddToCart = availableSizes.length > 0 && (!selectedSize || selectedStock > 0);
 
   function handleWishlist() {
     setHeartPulsing(true);
@@ -85,8 +80,21 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
   }
 
   function handleAddToCart() {
+    if (!canAddToCart) return;
     onAddToCart(product, selectedSize, selectedColor, qty);
     onClose();
+  }
+
+  function handleColorSelect(color) {
+    setSelectedColor(color.color);
+    setQty(1);
+    if (color.image) {
+      const imageIndex = productImages.indexOf(color.image);
+      if (imageIndex >= 0) setCurrentImage(imageIndex);
+    }
+    if (selectedSize && !getAvailableSizesForColor(product, color.color).includes(selectedSize)) {
+      setSelectedSize(null);
+    }
   }
 
   const isProductWishlisted = wishlist?.includes(product.id);
@@ -215,24 +223,28 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
               Taille{selectedSize && <span className="font-normal text-[#9CA3AF] ml-2">{selectedSize}</span>}
             </p>
             <div className="flex flex-wrap gap-2">
-              {productSizes.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSelectedSize(s)}
-                  aria-pressed={selectedSize === s}
-                  className="rounded-full border font-sans font-medium transition-all duration-150"
-                  style={{
-                    padding: '7px 16px',
-                    fontSize: '13px',
-                    height: '36px',
-                    background: selectedSize === s ? '#1C2340' : 'transparent',
-                    color: selectedSize === s ? '#fff' : '#1C2340',
-                    borderColor: selectedSize === s ? '#1C2340' : '#EBB4BB',
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
+              {productSizes.map((s) => {
+                const inStock = !selectedColor || availableSizes.includes(s);
+                return (
+                  <button
+                    key={s}
+                    onClick={() => inStock && setSelectedSize(s)}
+                    aria-pressed={selectedSize === s}
+                    disabled={!inStock}
+                    className="rounded-full border font-sans font-medium transition-all duration-150 disabled:opacity-40"
+                    style={{
+                      padding: '7px 16px',
+                      fontSize: '13px',
+                      height: '36px',
+                      background: selectedSize === s ? '#1C2340' : 'transparent',
+                      color: selectedSize === s ? '#fff' : '#1C2340',
+                      borderColor: selectedSize === s ? '#1C2340' : '#EBB4BB',
+                    }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -244,18 +256,18 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             <div className="flex gap-3">
               {productColors.map((c) => (
                 <button
-                  key={c}
-                  onClick={() => setSelectedColor(c)}
-                  aria-pressed={selectedColor === c}
-                  aria-label={c}
-                  title={c}
+                  key={c.color}
+                  onClick={() => handleColorSelect(c)}
+                  aria-pressed={selectedColor === c.color}
+                  aria-label={c.colorName}
+                  title={c.colorName}
                   className="rounded-full transition-all duration-150"
                   style={{
                     width: '32px',
                     height: '32px',
-                    background: COLOR_MAP[c] || '#ccc',
-                    border: selectedColor === c ? '3px solid #1C2340' : '2px solid #EBB4BB',
-                    outline: selectedColor === c ? '2px solid white' : 'none',
+                    background: c.colorHex,
+                    border: selectedColor === c.color ? '3px solid #1C2340' : '2px solid #EBB4BB',
+                    outline: selectedColor === c.color ? '2px solid white' : 'none',
                     outlineOffset: '-4px',
                   }}
                 />
@@ -286,7 +298,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
                 {qty}
               </span>
               <button
-                onClick={() => setQty((q) => q + 1)}
+                onClick={() => setQty((q) => selectedSize ? Math.min(selectedStock, q + 1) : q + 1)}
                 aria-label="Augmenter la quantite"
                 className="flex items-center justify-center hover:bg-[#FDE8EC] transition-colors"
                 style={{ width: '44px', height: '44px' }}
@@ -294,6 +306,11 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
                 <Plus size={16} color="#1C2340" strokeWidth={1.8} />
               </button>
             </div>
+            {selectedSize && (
+              <p className="font-sans text-[#9CA3AF] mt-2" style={{ fontSize: '12px' }}>
+                Stock disponible: {selectedStock}
+              </p>
+            )}
           </div>
 
           {/* Add to cart */}
@@ -301,10 +318,11 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             <button
               id="detail-add-to-cart"
               onClick={handleAddToCart}
-              className="w-full bg-[#1C2340] text-white font-sans font-semibold rounded-full hover:bg-[#2D375F] transition-colors duration-200"
+              disabled={!canAddToCart}
+              className="w-full bg-[#1C2340] text-white font-sans font-semibold rounded-full hover:bg-[#2D375F] transition-colors duration-200 disabled:opacity-50"
               style={{ height: '52px', fontSize: '15px', letterSpacing: '0.04em' }}
             >
-              Ajouter au panier
+              {canAddToCart ? 'Ajouter au panier' : 'Indisponible'}
             </button>
             <button
               id="detail-add-to-favorites"
@@ -361,10 +379,11 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
           </div>
           <button
             onClick={handleAddToCart}
-            className="flex-1 max-w-[200px] bg-[#1C2340] text-white font-sans font-semibold rounded-full"
+            disabled={!canAddToCart}
+            className="flex-1 max-w-[200px] bg-[#1C2340] text-white font-sans font-semibold rounded-full disabled:opacity-50"
             style={{ height: '48px', fontSize: '14px' }}
           >
-            Ajouter au panier
+            {canAddToCart ? 'Ajouter au panier' : 'Indisponible'}
           </button>
         </div>
       )}
