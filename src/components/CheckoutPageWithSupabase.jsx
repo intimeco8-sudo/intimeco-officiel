@@ -55,7 +55,7 @@ function InputField({ label, id, type = 'text', placeholder, value, onChange, re
     );
 }
 
-export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = DEFAULT_STORE_SETTINGS }) {
+export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = DEFAULT_STORE_SETTINGS, initialPromo = null }) {
     const [form, setForm] = useState({
         fullName: '',
         phone: '',
@@ -63,11 +63,15 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
         wilaya: '',
         commune: '',
         payment: 'livraison',
-        promoCode: '',
+        promoCode: initialPromo?.code || '',
     });
 
-    const [promoValidation, setPromoValidation] = useState(null);
-    const [promoApplied, setPromoApplied] = useState(false);
+    const [promoValidation, setPromoValidation] = useState(
+        initialPromo
+            ? { valid: true, discountAmount: initialPromo.discountAmount, data: initialPromo.data }
+            : null
+    );
+    const [promoApplied, setPromoApplied] = useState(Boolean(initialPromo));
     const [orderNumber, setOrderNumber] = useState('');
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [submitting, setSubmitting] = useState(false);

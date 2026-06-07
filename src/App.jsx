@@ -35,6 +35,7 @@ export default function App() {
   // Data state
   const storeSettings = useStoreSettings();
   const [cartItems, setCartItems] = useState([]);
+  const [appliedPromo, setAppliedPromo] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [toasts, setToasts] = useState([]);
 
@@ -81,6 +82,7 @@ export default function App() {
         },
       ];
     });
+    setAppliedPromo(null);
     addToast('Produit ajoute au panier');
   }
 
@@ -96,6 +98,7 @@ export default function App() {
           : i
       )
     );
+    setAppliedPromo(null);
   }
 
   function removeFromCart(item) {
@@ -104,6 +107,7 @@ export default function App() {
         (i) => !(i.id === item.id && i.selectedSize === item.selectedSize && i.selectedColor === item.selectedColor)
       )
     );
+    setAppliedPromo(null);
     addToast('Article retire du panier');
   }
 
@@ -142,6 +146,7 @@ export default function App() {
 
   function handleOrderConfirm() {
     setCartItems([]);
+    setAppliedPromo(null);
   }
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0);
@@ -154,6 +159,7 @@ export default function App() {
           onBack={() => setShowCheckout(false)}
           onConfirm={handleOrderConfirm}
           settings={storeSettings}
+          initialPromo={appliedPromo}
         />
         <Toast toasts={toasts} onDismiss={dismissToast} />
       </>
@@ -195,6 +201,8 @@ export default function App() {
         onRemove={removeFromCart}
         onCheckout={handleCheckout}
         settings={storeSettings}
+        appliedPromo={appliedPromo}
+        onPromoApplied={setAppliedPromo}
       />
 
       {/* Product detail */}

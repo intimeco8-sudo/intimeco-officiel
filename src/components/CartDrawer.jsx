@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Trash2, Minus, Plus, ShoppingBag } from 'lucide-react';
 import { getProductImage } from '../utils/productImages';
 import { DEFAULT_STORE_SETTINGS, getNumberSetting } from '../hooks/useStoreSettings';
+import { validatePromoCode } from '../supabase/promos';
 
 export default function CartDrawer({
   isOpen,
@@ -11,9 +12,12 @@ export default function CartDrawer({
   onRemove,
   onCheckout,
   settings = DEFAULT_STORE_SETTINGS,
+  appliedPromo = null,
+  onPromoApplied,
 }) {
   const [promoCode, setPromoCode] = useState('');
-  const [promoApplied, setPromoApplied] = useState(false);
+  const [promoMessage, setPromoMessage] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
@@ -21,16 +25,43 @@ export default function CartDrawer({
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  useEffect(() => {
+    setPromoCode(appliedPromo?.code || '');
+    setPromoMessage(appliedPromo ? 'Code promo applique' : '');
+  }, [appliedPromo]);
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
   const deliveryBaseFee = getNumberSetting(settings, 'delivery_fee', 500);
   const freeDeliveryThreshold = getNumberSetting(settings, 'free_delivery_threshold', 3000);
   const deliveryFee = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold ? 0 : deliveryBaseFee;
-  const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
+  const discount = appliedPromo?.discountAmount || 0;
   const total = subtotal + deliveryFee - discount;
 
-  function applyPromo() {
-    if (promoCode.trim().toLowerCase() === 'intime10') {
-      setPromoApplied(true);
+  async function applyPromo() {
+    const code = promoCode.trim();
+    if (!code || promoLoading || appliedPromo) return;
+
+    setPromoLoading(true);
+    setPromoMessage('');
+
+    try {
+      const result = await validatePromoCode(code, subtotal);
+      if (result.valid) {
+        onPromoApplied?.({
+          code: code.toUpperCase(),
+          discountAmount: result.discountAmount,
+          data: result.data,
+        });
+        setPromoMessage('Code promo applique');
+      } else {
+        onPromoApplied?.(null);
+        setPromoMessage(result.message || 'Code invalide');
+      }
+    } catch {
+      onPromoApplied?.(null);
+      setPromoMessage('Erreur lors de la validation du code promo');
+    } finally {
+      setPromoLoading(false);
     }
   }
 
@@ -185,23 +216,34 @@ export default function CartDrawer({
               <input
                 type="text"
                 value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setPromoMessage('');
+                }}
                 placeholder="Code promo"
                 aria-label="Code promo"
                 className="flex-1 border border-[#EBB4BB] rounded-full px-4 font-sans text-[#1C2340] placeholder-[#9CA3AF] outline-none focus:border-[#1C2340] transition-colors"
                 style={{ height: '44px', fontSize: '14px' }}
-                disabled={promoApplied}
+                disabled={Boolean(appliedPromo)}
               />
               <button
                 id="promo-apply-btn"
                 onClick={applyPromo}
-                disabled={promoApplied}
+                disabled={Boolean(appliedPromo) || promoLoading}
                 className="rounded-full border border-[#1C2340] px-4 font-sans font-semibold text-[#1C2340] hover:bg-[#FDE8EC] transition-colors disabled:opacity-50"
                 style={{ height: '44px', fontSize: '13px' }}
               >
-                {promoApplied ? 'Applique' : 'Appliquer'}
+                {appliedPromo ? 'Applique' : promoLoading ? '...' : 'Appliquer'}
               </button>
             </div>
+            {promoMessage && (
+              <p
+                className={`font-sans ${appliedPromo ? 'text-[#10B981]' : 'text-[#E63946]'}`}
+                style={{ fontSize: '12px' }}
+              >
+                {promoMessage}
+              </p>
+            )}
 
             {/* Totals */}
             <div className="space-y-1">
@@ -218,9 +260,9 @@ export default function CartDrawer({
                   Livraison gratuite des {freeDeliveryThreshold.toLocaleString('fr-DZ')} DZD d'achat
                 </p>
               )}
-              {promoApplied && (
+              {discount > 0 && (
                 <div className="flex justify-between font-sans text-[#E63946]" style={{ fontSize: '14px' }}>
-                  <span>Reduction (10%)</span>
+                  <span>Reduction ({appliedPromo?.code})</span>
                   <span>- {discount.toLocaleString('fr-DZ')} DZD</span>
                 </div>
               )}

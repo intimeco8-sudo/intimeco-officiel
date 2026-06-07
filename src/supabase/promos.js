@@ -11,7 +11,7 @@ export async function validatePromoCode(code, orderTotal) {
     const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
-        .eq('code', normalizedCode)
+        .ilike('code', normalizedCode)
         .eq('is_active', true)
         .maybeSingle();
 
