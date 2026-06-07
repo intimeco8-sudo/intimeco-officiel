@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { deleteProductImages } from './storage';
 
 export async function fetchProducts({
     category = null,
@@ -78,6 +79,16 @@ export async function updateProduct(id, updates) {
 }
 
 export async function deleteProduct(id) {
+    const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('images')
+        .eq('id', id)
+        .single();
+
+    if (fetchError) throw fetchError;
+
+    await deleteProductImages(product?.images);
+
     const { error } = await supabase
         .from('products')
         .delete()

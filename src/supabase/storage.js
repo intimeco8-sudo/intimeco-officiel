@@ -45,6 +45,19 @@ export async function deleteProductImage(imageUrl) {
     if (error) throw error;
 }
 
+export async function deleteProductImages(imageUrls = []) {
+    const filePaths = imageUrls
+        .filter((imageUrl) => typeof imageUrl === 'string' && imageUrl.includes(`${BUCKET_NAME}/`))
+        .map((imageUrl) => decodeURIComponent(imageUrl.split(`${BUCKET_NAME}/`)[1].split('?')[0]))
+        .filter(Boolean);
+
+    if (filePaths.length === 0) return;
+
+    const { error } = await supabase.storage.from(BUCKET_NAME).remove(filePaths);
+
+    if (error) throw error;
+}
+
 export async function uploadMultipleImages(files) {
     const uploadPromises = files.map((file) => uploadProductImage(file));
     return await Promise.all(uploadPromises);
