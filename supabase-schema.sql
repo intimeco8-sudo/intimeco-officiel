@@ -293,11 +293,11 @@ BEGIN
       RAISE EXCEPTION 'Quantite invalide';
     END IF;
 
-    SELECT *
+    SELECT p.*
     INTO product_record
-    FROM public.products
-    WHERE id = item_product_id
-      AND is_active = true;
+    FROM public.products p
+    WHERE p.id = item_product_id
+      AND p.is_active = true;
 
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Produit indisponible';
@@ -432,8 +432,8 @@ BEGIN
 
   SELECT *
   INTO target_order
-  FROM public.orders
-  WHERE id = order_id
+  FROM public.orders o
+  WHERE o.id = order_id
   FOR UPDATE;
 
   IF NOT FOUND THEN
@@ -450,8 +450,8 @@ BEGIN
 
       SELECT *
       INTO product_record
-      FROM public.products
-      WHERE id = item_record.product_id
+      FROM public.products p
+      WHERE p.id = item_record.product_id
       FOR UPDATE;
 
       IF NOT FOUND THEN
@@ -500,7 +500,7 @@ BEGIN
       SET variant_options = COALESCE(updated_variants, variant_options),
           stock = GREATEST(0, COALESCE(stock, 0) - item_record.quantity),
           updated_at = now()
-      WHERE id = item_record.product_id;
+      WHERE products.id = item_record.product_id;
     END LOOP;
 
     target_order.stock_deducted := true;
@@ -510,7 +510,7 @@ BEGIN
   SET status = new_status,
       stock_deducted = COALESCE(target_order.stock_deducted, false),
       updated_at = now()
-  WHERE id = order_id
+  WHERE orders.id = order_id
   RETURNING * INTO target_order;
 
   RETURN target_order;

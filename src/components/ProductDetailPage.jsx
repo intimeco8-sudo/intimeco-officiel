@@ -68,11 +68,14 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
   const productColors = getProductColorOptions(product);
   const selectedColorOption = productColors.find((color) => color.color === selectedColor);
+  const selectedColorImages = Array.isArray(selectedColorOption?.images)
+    ? selectedColorOption.images
+    : (selectedColorOption?.image ? [selectedColorOption.image] : []);
   const baseImages = Array.isArray(product.images)
     ? product.images.filter((image) => typeof image === 'string' && image.trim())
     : [];
   const productImages = [
-    ...(selectedColorOption?.image ? [selectedColorOption.image] : []),
+    ...selectedColorImages,
     ...baseImages,
   ].filter((image, index, list) => list.indexOf(image) === index);
   const visibleImages = productImages.length > 0 ? productImages : [PRODUCT_IMAGE_PLACEHOLDER];

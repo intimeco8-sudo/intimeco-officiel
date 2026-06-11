@@ -29,6 +29,14 @@ export const COLOR_PALETTE = [
 
 const COLOR_LOOKUP = new Map(COLOR_PALETTE.map((color) => [color.value, color]));
 
+function normalizeImageList(variant) {
+  const images = Array.isArray(variant?.images)
+    ? variant.images.filter((image) => typeof image === 'string' && image.trim())
+    : [];
+  const legacyImage = typeof variant?.image === 'string' && variant.image.trim() ? variant.image : '';
+  return [...(legacyImage ? [legacyImage] : []), ...images].filter((image, index, list) => list.indexOf(image) === index);
+}
+
 export function getColorMeta(value) {
   return COLOR_LOOKUP.get(value) || {
     name: value,
@@ -45,11 +53,13 @@ export function normalizeProductVariants(product) {
       .filter((variant) => variant?.color)
       .map((variant) => {
         const meta = getColorMeta(variant.color);
+        const images = normalizeImageList(variant);
         return {
           color: variant.color,
           colorName: variant.colorName || meta.name,
           colorHex: variant.colorHex || meta.hex,
-          image: variant.image || '',
+          image: images[0] || '',
+          images,
           stockBySize: variant.stockBySize && typeof variant.stockBySize === 'object'
             ? variant.stockBySize
             : {},
@@ -68,6 +78,7 @@ export function normalizeProductVariants(product) {
       colorName: meta.name,
       colorHex: meta.hex,
       image: '',
+      images: [],
       stockBySize: Object.fromEntries(sizes.map((size) => [size, Number.isFinite(fallbackStock) ? fallbackStock : 0])),
     };
   });
@@ -75,7 +86,7 @@ export function normalizeProductVariants(product) {
 
 export function getProductVariantImages(product) {
   return normalizeProductVariants(product)
-    .map((variant) => variant.image)
+    .flatMap((variant) => variant.images?.length ? variant.images : [variant.image])
     .filter((image) => typeof image === 'string' && image.trim());
 }
 
@@ -90,6 +101,7 @@ export function getProductColorOptions(product) {
       colorName: meta.name,
       colorHex: meta.hex,
       image: '',
+      images: [],
       stockBySize: {},
     };
   });

@@ -14,6 +14,7 @@ function createVariant(color, sizes = []) {
         colorName: meta.name,
         colorHex: meta.hex,
         image: '',
+        images: [],
         stockBySize: Object.fromEntries(sizes.map((size) => [size, 0])),
     };
 }
@@ -24,7 +25,13 @@ function syncVariantSizes(variants, sizes) {
         sizes.forEach((size) => {
             stockBySize[size] = Number.parseInt(variant.stockBySize?.[size], 10) || 0;
         });
-        return { ...variant, stockBySize };
+        const images = Array.isArray(variant.images)
+            ? variant.images.filter((image) => typeof image === 'string' && image.trim())
+            : [];
+        const legacyImage = typeof variant.image === 'string' && variant.image.trim() ? variant.image : '';
+        const imageList = [...(legacyImage ? [legacyImage] : []), ...images]
+            .filter((image, index, list) => list.indexOf(image) === index);
+        return { ...variant, image: imageList[0] || '', images: imageList, stockBySize };
     });
 }
 
@@ -137,22 +144,23 @@ export default function ProductForm({ product, onClose }) {
     };
 
     const handleVariantImageUpload = async (color, e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
         setUploading(true);
         setFormError('');
         try {
-            const imageUrl = await uploadProductImage(file);
-            const previousImage = formData.variant_options.find((variant) => variant.color === color)?.image;
-            if (previousImage) {
-                await deleteProductImage(previousImage);
-            }
+            const uploadedUrls = await Promise.all(files.map((file) => uploadProductImage(file)));
             setFormData((prev) => ({
                 ...prev,
-                variant_options: prev.variant_options.map((variant) =>
-                    variant.color === color ? { ...variant, image: imageUrl } : variant
-                ),
+                variant_options: prev.variant_options.map((variant) => {
+                    if (variant.color !== color) return variant;
+                    const currentImages = Array.isArray(variant.images) ? variant.images : [];
+                    const legacyImage = variant.image && !currentImages.includes(variant.image) ? [variant.image] : [];
+                    const images = [...legacyImage, ...currentImages, ...uploadedUrls]
+                        .filter((image, index, list) => list.indexOf(image) === index);
+                    return { ...variant, image: images[0] || '', images };
+                }),
             }));
         } catch (error) {
             setFormError(error?.message || 'Erreur lors du telechargement de l\'image couleur');
@@ -162,17 +170,19 @@ export default function ProductForm({ product, onClose }) {
         }
     };
 
-    const handleVariantImageDelete = async (color) => {
-        const imageUrl = formData.variant_options.find((variant) => variant.color === color)?.image;
+    const handleVariantImageDelete = async (color, imageUrl) => {
         if (!imageUrl) return;
 
         try {
             await deleteProductImage(imageUrl);
             setFormData((prev) => ({
                 ...prev,
-                variant_options: prev.variant_options.map((variant) =>
-                    variant.color === color ? { ...variant, image: '' } : variant
-                ),
+                variant_options: prev.variant_options.map((variant) => {
+                    if (variant.color !== color) return variant;
+                    const currentImages = Array.isArray(variant.images) ? variant.images : [];
+                    const images = currentImages.filter((image) => image !== imageUrl);
+                    return { ...variant, image: images[0] || '', images };
+                }),
             }));
         } catch (error) {
             setFormError(error?.message || 'Erreur lors de la suppression de l\'image couleur');
@@ -494,10 +504,14 @@ export default function ProductForm({ product, onClose }) {
                                     </div>
 
                                     <div className="space-y-4">
-                                        {formData.variant_options.map((variant) => (
+                                        {formData.variant_options.map((variant) => {
+                                            const variantImages = Array.isArray(variant.images)
+                                                ? variant.images
+                                                : (variant.image ? [variant.image] : []);
+                                            return (
                                             <div key={variant.color} className="rounded-xl border border-[#F9D7DA] p-4 bg-white">
                                                 <div className="flex flex-col sm:flex-row gap-4">
-                                                    <div className="sm:w-44 flex-none">
+                                                    <div className="sm:w-56 flex-none">
                                                         <div className="flex items-center gap-2 mb-2">
                                                             <span
                                                                 className="rounded-full border"
@@ -513,35 +527,56 @@ export default function ProductForm({ product, onClose }) {
                                                             </p>
                                                         </div>
 
-                                                        <div className="relative h-36 rounded-lg border border-dashed border-[#EBB4BB] overflow-hidden bg-[#FDE8EC]">
-                                                            {variant.image ? (
-                                                                <>
-                                                                    <img src={variant.image} alt={variant.colorName} className="w-full h-full object-cover" />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleVariantImageDelete(variant.color)}
-                                                                        className="absolute top-2 right-2 p-2 bg-[#E63946] rounded-full"
-                                                                        aria-label={`Supprimer l'image ${variant.colorName}`}
-                                                                    >
-                                                                        <Trash2 size={14} color="white" strokeWidth={1.8} />
-                                                                    </button>
-                                                                </>
-                                                            ) : (
-                                                                <div className="h-full flex flex-col items-center justify-center gap-2 text-center px-3">
+                                                        <div className="space-y-3">
+                                                            <div className="relative min-h-28 rounded-lg border border-dashed border-[#EBB4BB] overflow-hidden bg-[#FDE8EC]">
+                                                                <div className="h-full min-h-28 flex flex-col items-center justify-center gap-2 text-center px-3 py-4">
                                                                     <Upload size={24} color="#9CA3AF" strokeWidth={1.8} />
                                                                     <p className="font-sans text-[#9CA3AF]" style={{ fontSize: '12px' }}>
-                                                                        Image {variant.colorName}
+                                                                        Ajouter des images {variant.colorName}
                                                                     </p>
+                                                                    {variantImages.length > 0 && (
+                                                                        <p className="font-sans text-[#5A6080]" style={{ fontSize: '11px' }}>
+                                                                            {variantImages.length} image{variantImages.length > 1 ? 's' : ''}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/jpeg,image/png,image/webp"
+                                                                    multiple
+                                                                    onChange={(e) => handleVariantImageUpload(variant.color, e)}
+                                                                    disabled={uploading}
+                                                                    aria-label={`Telecharger les images ${variant.colorName}`}
+                                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                                />
+                                                            </div>
+
+                                                            {variantImages.length > 0 && (
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    {variantImages.map((imageUrl, index) => (
+                                                                        <div key={imageUrl} className="relative h-20 rounded-lg overflow-hidden border border-[#F9D7DA] bg-[#FDE8EC]">
+                                                                            <img
+                                                                                src={imageUrl}
+                                                                                alt={`${variant.colorName} ${index + 1}`}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleVariantImageDelete(variant.color, imageUrl)}
+                                                                                className="absolute top-1.5 right-1.5 p-1.5 bg-[#E63946] rounded-full"
+                                                                                aria-label={`Supprimer l'image ${index + 1} ${variant.colorName}`}
+                                                                            >
+                                                                                <Trash2 size={12} color="white" strokeWidth={1.8} />
+                                                                            </button>
+                                                                            {index === 0 && (
+                                                                                <span className="absolute left-1.5 bottom-1.5 px-1.5 py-0.5 rounded bg-[#1C2340] text-white font-sans" style={{ fontSize: '9px' }}>
+                                                                                    Principal
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
                                                                 </div>
                                                             )}
-                                                            <input
-                                                                type="file"
-                                                                accept="image/jpeg,image/png,image/webp"
-                                                                onChange={(e) => handleVariantImageUpload(variant.color, e)}
-                                                                disabled={uploading}
-                                                                aria-label={`Telecharger l'image ${variant.colorName}`}
-                                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                                                            />
                                                         </div>
                                                     </div>
 
@@ -572,7 +607,8 @@ export default function ProductForm({ product, onClose }) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                        );
+                                        })}
                                     </div>
                                 </div>
                             )}
