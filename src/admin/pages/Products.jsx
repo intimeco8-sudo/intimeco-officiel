@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { fetchProducts, toggleProductActive, deleteProduct } from '../../supabase/products';
+import { fetchProducts, toggleProductActive, deleteProduct, subscribeToProducts } from '../../supabase/products';
 import { getProductImage } from '../../utils/productImages';
 import { normalizeProductVariants } from '../../utils/productVariants';
 import ProductForm from './ProductForm';
@@ -20,9 +20,10 @@ function getColorStockRows(product) {
             0
         );
         const sizes = Object.entries(stockBySize)
-            .filter(([, value]) => (Number.parseInt(value, 10) || 0) > 0)
-            .map(([size, value]) => `${size}: ${value}`)
-            .join(', ');
+            .map(([size, value]) => ({
+                size,
+                quantity: Number.parseInt(value, 10) || 0,
+            }));
 
         return {
             color: variant.color,
@@ -46,26 +47,37 @@ function ColorStockSummary({ product, align = 'left' }) {
                 Total: {total}
             </span>
             {rows.length > 0 ? (
-                <div className={`flex flex-wrap gap-1.5 ${align === 'center' ? 'justify-center' : 'justify-start'}`}>
+                <div className={`flex flex-col gap-2 ${align === 'center' ? 'items-center' : 'items-start'}`}>
                     {rows.map((row) => (
-                        <span
+                        <div
                             key={row.color}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-[#F9D7DA] bg-white px-2 py-1 font-sans text-[#5A6080]"
-                            style={{ fontSize: '12px' }}
-                            title={row.sizes || 'Aucun stock par taille'}
+                            className={`rounded-lg border border-[#F9D7DA] bg-white px-2.5 py-2 ${align === 'center' ? 'w-fit' : 'w-full'}`}
                         >
-                            <span
-                                className="rounded-full border"
-                                style={{
-                                    width: '10px',
-                                    height: '10px',
-                                    background: row.hex,
-                                    borderColor: row.color === 'blanc' || row.color === 'ivoire' ? '#D1D5DB' : row.hex,
-                                }}
-                            />
-                            <span>{row.name}</span>
-                            <strong className="text-[#1C2340]">{row.total}</strong>
-                        </span>
+                            <div className="flex items-center gap-1.5 font-sans text-[#5A6080]" style={{ fontSize: '12px' }}>
+                                <span
+                                    className="rounded-full border"
+                                    style={{
+                                        width: '10px',
+                                        height: '10px',
+                                        background: row.hex,
+                                        borderColor: row.color === 'blanc' || row.color === 'ivoire' ? '#D1D5DB' : row.hex,
+                                    }}
+                                />
+                                <span>{row.name}</span>
+                                <strong className="text-[#1C2340]">{row.total}</strong>
+                            </div>
+                            <div className={`mt-1 flex flex-wrap gap-1 ${align === 'center' ? 'justify-center' : 'justify-start'}`}>
+                                {row.sizes.map(({ size, quantity }) => (
+                                    <span
+                                        key={`${row.color}-${size}`}
+                                        className={`rounded-full px-1.5 py-0.5 font-sans ${quantity > 0 ? 'bg-[#FDE8EC] text-[#1C2340]' : 'bg-[#F3F4F6] text-[#9CA3AF]'}`}
+                                        style={{ fontSize: '11px' }}
+                                    >
+                                        {size}: {quantity}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
@@ -114,6 +126,14 @@ export default function Products() {
     useEffect(() => {
         loadProducts();
     }, [categoryFilter, activeFilter]);
+
+    useEffect(() => {
+        const unsubscribe = subscribeToProducts(() => {
+            loadProducts();
+        });
+
+        return unsubscribe;
+    }, [categoryFilter, activeFilter, searchQuery]);
 
     const handleSearch = (e) => {
         e.preventDefault();

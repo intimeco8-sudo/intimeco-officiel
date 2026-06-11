@@ -17,6 +17,27 @@ function normalizeProduct(product) {
     };
 }
 
+export function subscribeToProducts(callback) {
+    const channel = supabase
+        .channel('products-changes')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'products',
+            },
+            (payload) => {
+                callback(payload);
+            }
+        )
+        .subscribe();
+
+    return () => {
+        supabase.removeChannel(channel);
+    };
+}
+
 export async function fetchProducts({
     category = null,
     minPrice = 0,
