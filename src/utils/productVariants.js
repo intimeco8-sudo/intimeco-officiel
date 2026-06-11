@@ -30,11 +30,10 @@ export const COLOR_PALETTE = [
 const COLOR_LOOKUP = new Map(COLOR_PALETTE.map((color) => [color.value, color]));
 
 function normalizeImageList(variant) {
-  const images = Array.isArray(variant?.images)
-    ? variant.images.filter((image) => typeof image === 'string' && image.trim())
-    : [];
-  const legacyImage = typeof variant?.image === 'string' && variant.image.trim() ? variant.image : '';
-  return [...(legacyImage ? [legacyImage] : []), ...images].filter((image, index, list) => list.indexOf(image) === index);
+  const images = Array.isArray(variant?.images) ? variant.images : [variant?.images];
+  return [variant?.image, ...images]
+    .filter((image) => typeof image === 'string' && image.trim())
+    .filter((image, index, list) => list.indexOf(image) === index);
 }
 
 export function getColorMeta(value) {

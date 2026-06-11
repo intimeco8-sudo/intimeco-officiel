@@ -19,18 +19,20 @@ function createVariant(color, sizes = []) {
     };
 }
 
+function normalizeImageList(...sources) {
+    return sources
+        .flatMap((source) => Array.isArray(source) ? source : [source])
+        .filter((image) => typeof image === 'string' && image.trim())
+        .filter((image, index, list) => list.indexOf(image) === index);
+}
+
 function syncVariantSizes(variants, sizes) {
     return variants.map((variant) => {
         const stockBySize = {};
         sizes.forEach((size) => {
             stockBySize[size] = Number.parseInt(variant.stockBySize?.[size], 10) || 0;
         });
-        const images = Array.isArray(variant.images)
-            ? variant.images.filter((image) => typeof image === 'string' && image.trim())
-            : [];
-        const legacyImage = typeof variant.image === 'string' && variant.image.trim() ? variant.image : '';
-        const imageList = [...(legacyImage ? [legacyImage] : []), ...images]
-            .filter((image, index, list) => list.indexOf(image) === index);
+        const imageList = normalizeImageList(variant.image, variant.images);
         return { ...variant, image: imageList[0] || '', images: imageList, stockBySize };
     });
 }
@@ -144,7 +146,8 @@ export default function ProductForm({ product, onClose }) {
     };
 
     const handleVariantImageUpload = async (color, e) => {
-        const files = Array.from(e.target.files || []);
+        const input = e.currentTarget;
+        const files = Array.from(input.files || []);
         if (files.length === 0) return;
 
         setUploading(true);
@@ -155,17 +158,14 @@ export default function ProductForm({ product, onClose }) {
                 ...prev,
                 variant_options: prev.variant_options.map((variant) => {
                     if (variant.color !== color) return variant;
-                    const currentImages = Array.isArray(variant.images) ? variant.images : [];
-                    const legacyImage = variant.image && !currentImages.includes(variant.image) ? [variant.image] : [];
-                    const images = [...legacyImage, ...currentImages, ...uploadedUrls]
-                        .filter((image, index, list) => list.indexOf(image) === index);
+                    const images = normalizeImageList(variant.image, variant.images, uploadedUrls);
                     return { ...variant, image: images[0] || '', images };
                 }),
             }));
         } catch (error) {
             setFormError(error?.message || 'Erreur lors du telechargement de l\'image couleur');
         } finally {
-            e.target.value = '';
+            input.value = '';
             setUploading(false);
         }
     };
@@ -179,8 +179,8 @@ export default function ProductForm({ product, onClose }) {
                 ...prev,
                 variant_options: prev.variant_options.map((variant) => {
                     if (variant.color !== color) return variant;
-                    const currentImages = Array.isArray(variant.images) ? variant.images : [];
-                    const images = currentImages.filter((image) => image !== imageUrl);
+                    const images = normalizeImageList(variant.image, variant.images)
+                        .filter((image) => image !== imageUrl);
                     return { ...variant, image: images[0] || '', images };
                 }),
             }));
@@ -505,26 +505,33 @@ export default function ProductForm({ product, onClose }) {
 
                                     <div className="space-y-4">
                                         {formData.variant_options.map((variant) => {
-                                            const variantImages = Array.isArray(variant.images)
-                                                ? variant.images
-                                                : (variant.image ? [variant.image] : []);
+                                            const variantImages = normalizeImageList(variant.image, variant.images);
+                                            const variantStockTotal = Object.values(variant.stockBySize || {}).reduce(
+                                                (sum, value) => sum + (Number.parseInt(value, 10) || 0),
+                                                0
+                                            );
                                             return (
                                             <div key={variant.color} className="rounded-xl border border-[#F9D7DA] p-4 bg-white">
                                                 <div className="flex flex-col sm:flex-row gap-4">
                                                     <div className="sm:w-56 flex-none">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span
-                                                                className="rounded-full border"
-                                                                style={{
-                                                                    width: '18px',
-                                                                    height: '18px',
-                                                                    background: variant.colorHex,
-                                                                    borderColor: variant.color === 'blanc' || variant.color === 'ivoire' ? '#D1D5DB' : variant.colorHex,
-                                                                }}
-                                                            />
-                                                            <p className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
-                                                                {variant.colorName}
-                                                            </p>
+                                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span
+                                                                    className="rounded-full border flex-none"
+                                                                    style={{
+                                                                        width: '18px',
+                                                                        height: '18px',
+                                                                        background: variant.colorHex,
+                                                                        borderColor: variant.color === 'blanc' || variant.color === 'ivoire' ? '#D1D5DB' : variant.colorHex,
+                                                                    }}
+                                                                />
+                                                                <p className="font-sans font-semibold text-[#1C2340] truncate" style={{ fontSize: '14px' }}>
+                                                                    {variant.colorName}
+                                                                </p>
+                                                            </div>
+                                                            <span className="flex-none rounded-full bg-[#FDE8EC] px-2 py-1 font-sans font-semibold text-[#1C2340]" style={{ fontSize: '11px' }}>
+                                                                Stock: {variantStockTotal}
+                                                            </span>
                                                         </div>
 
                                                         <div className="space-y-3">
