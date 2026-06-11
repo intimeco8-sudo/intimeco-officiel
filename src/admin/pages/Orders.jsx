@@ -13,6 +13,19 @@ const WILAYAS = [
     'Ghardaia', 'Relizane',
 ];
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatDzd(value) {
+    return `${Number.parseFloat(value || 0).toLocaleString('fr-DZ')} DZD`;
+}
+
 function OrderDetailModal({ order, onClose, onStatusChange, onNotesChange }) {
     const [status, setStatus] = useState(order.status);
     const [notes, setNotes] = useState(order.notes || '');
@@ -43,69 +56,288 @@ function OrderDetailModal({ order, onClose, onStatusChange, onNotesChange }) {
             alert('La fenetre d impression a ete bloquee par le navigateur');
             return;
         }
+        const logoUrl = `${window.location.origin}/intime-logo.jpg`;
+        const orderDate = new Date(order.created_at).toLocaleDateString('fr-FR');
+        const orderDateTime = new Date(order.created_at).toLocaleString('fr-FR');
+        const rowsHtml = order.items.map((item) => `
+                <tr>
+                  <td>
+                    <strong>${escapeHtml(item.product_name)}</strong>
+                    <span>${escapeHtml([item.size, item.color].filter(Boolean).join(' / ') || 'Article')}</span>
+                  </td>
+                  <td>${escapeHtml(item.size || '-')}</td>
+                  <td>${escapeHtml(item.color || '-')}</td>
+                  <td class="qty">${escapeHtml(item.quantity)}</td>
+                  <td class="money">${formatDzd(item.product_price)}</td>
+                  <td class="money strong">${formatDzd(item.subtotal)}</td>
+                </tr>
+              `).join('');
+
         printWindow.document.write(`
       <html>
         <head>
           <title>Bon de livraison - ${order.order_number}</title>
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: Arial, sans-serif; padding: 40px; }
-            h1 { font-size: 24px; margin-bottom: 10px; }
-            h2 { font-size: 18px; margin: 20px 0 10px; border-bottom: 2px solid #000; padding-bottom: 5px; }
-            p { margin: 5px 0; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-            th { background: #f0f0f0; }
-            .total { font-weight: bold; font-size: 16px; }
-            @media print { body { padding: 20px; } }
+            * { box-sizing: border-box; }
+            body {
+              margin: 0;
+              background: #FDE8EC;
+              color: #1C2340;
+              font-family: "Jost", "Segoe UI", Arial, sans-serif;
+              font-size: 13px;
+              line-height: 1.45;
+            }
+            .page {
+              width: 210mm;
+              min-height: 297mm;
+              margin: 0 auto;
+              padding: 18mm;
+              background: #FFFDFD;
+            }
+            .frame {
+              border: 1px solid #F4CBD1;
+              border-radius: 18px;
+              overflow: hidden;
+              background: #fff;
+            }
+            .header {
+              display: grid;
+              grid-template-columns: 92px 1fr auto;
+              gap: 18px;
+              align-items: center;
+              padding: 22px 24px;
+              background: linear-gradient(135deg, #FDE8EC 0%, #F9D7DA 100%);
+              border-bottom: 1px solid #EBB4BB;
+            }
+            .logo {
+              width: 82px;
+              height: 82px;
+              border-radius: 50%;
+              object-fit: cover;
+              border: 3px solid rgba(255,255,255,0.88);
+              box-shadow: 0 10px 26px rgba(28,35,64,0.12);
+            }
+            .brand {
+              margin: 0;
+              font-family: Georgia, "Times New Roman", serif;
+              font-size: 30px;
+              letter-spacing: 0.08em;
+              font-weight: 600;
+            }
+            .subtitle {
+              margin: 5px 0 0;
+              color: #5A6080;
+              font-style: italic;
+            }
+            .meta-card {
+              min-width: 190px;
+              padding: 12px 14px;
+              border: 1px solid rgba(235,180,187,0.75);
+              border-radius: 12px;
+              background: rgba(255,255,255,0.72);
+            }
+            .meta-card p { margin: 0; }
+            .meta-card strong {
+              display: block;
+              margin-top: 3px;
+              font-size: 15px;
+            }
+            .content { padding: 24px; }
+            .section-title {
+              margin: 0 0 12px;
+              color: #1C2340;
+              font-family: Georgia, "Times New Roman", serif;
+              font-size: 18px;
+              font-weight: 600;
+            }
+            .grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 14px;
+              margin-bottom: 22px;
+            }
+            .info-box {
+              min-height: 128px;
+              padding: 15px 16px;
+              border: 1px solid #F4CBD1;
+              border-radius: 14px;
+              background: #FFF7F8;
+            }
+            .info-box p { margin: 5px 0; color: #5A6080; }
+            .info-box strong { color: #1C2340; }
+            table {
+              width: 100%;
+              border-collapse: separate;
+              border-spacing: 0;
+              overflow: hidden;
+              border: 1px solid #F4CBD1;
+              border-radius: 14px;
+            }
+            th {
+              padding: 10px 11px;
+              background: #1C2340;
+              color: white;
+              text-align: left;
+              font-size: 11px;
+              letter-spacing: 0.04em;
+              text-transform: uppercase;
+            }
+            td {
+              padding: 11px;
+              border-bottom: 1px solid #F9D7DA;
+              color: #5A6080;
+              vertical-align: top;
+            }
+            tbody tr:last-child td { border-bottom: 0; }
+            td strong {
+              display: block;
+              color: #1C2340;
+              font-size: 13px;
+            }
+            td span {
+              display: block;
+              margin-top: 2px;
+              color: #9CA3AF;
+              font-size: 11px;
+            }
+            .qty { text-align: center; color: #1C2340; font-weight: 700; }
+            .money { text-align: right; white-space: nowrap; }
+            .strong { color: #1C2340; font-weight: 700; }
+            .summary {
+              display: grid;
+              grid-template-columns: 1fr 260px;
+              gap: 18px;
+              margin-top: 22px;
+              align-items: start;
+            }
+            .note {
+              padding: 14px 16px;
+              border-left: 4px solid #EBB4BB;
+              background: #FFF7F8;
+              color: #5A6080;
+              border-radius: 10px;
+            }
+            .totals {
+              padding: 14px 16px;
+              border: 1px solid #F4CBD1;
+              border-radius: 14px;
+              background: #FFF7F8;
+            }
+            .total-row {
+              display: flex;
+              justify-content: space-between;
+              gap: 12px;
+              margin: 7px 0;
+              color: #5A6080;
+            }
+            .total-row.discount { color: #E63946; }
+            .total-row.final {
+              margin-top: 11px;
+              padding-top: 11px;
+              border-top: 1px solid #EBB4BB;
+              color: #1C2340;
+              font-size: 18px;
+              font-weight: 800;
+            }
+            .footer {
+              display: flex;
+              justify-content: space-between;
+              gap: 20px;
+              padding: 16px 24px 20px;
+              border-top: 1px solid #F4CBD1;
+              color: #9CA3AF;
+              font-size: 11px;
+            }
+            @page { size: A4; margin: 0; }
+            @media print {
+              body { background: white; }
+              .page { width: auto; min-height: auto; padding: 12mm; }
+              .frame, .info-box, table, .totals { break-inside: avoid; }
+            }
           </style>
         </head>
         <body>
-          <h1>INTIME & CO</h1>
-          <p>Bon de livraison</p>
-          <p>Commande: ${order.order_number}</p>
-          <p>Date: ${new Date(order.created_at).toLocaleDateString('fr-FR')}</p>
-          
-          <h2>Client</h2>
-          <p><strong>Nom:</strong> ${order.customer_name}</p>
-          <p><strong>Telephone:</strong> ${order.customer_phone}</p>
-          <p><strong>Adresse:</strong> ${order.address}</p>
-          <p><strong>Commune:</strong> ${order.commune}</p>
-          <p><strong>Wilaya:</strong> ${order.wilaya}</p>
-          
-          <h2>Articles</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Taille</th>
-                <th>Couleur</th>
-                <th>Qte</th>
-                <th>Prix unitaire</th>
-                <th>Sous-total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${order.items.map((item) => `
-                <tr>
-                  <td>${item.product_name}</td>
-                  <td>${item.size || '-'}</td>
-                  <td>${item.color || '-'}</td>
-                  <td>${item.quantity}</td>
-                  <td>${parseFloat(item.product_price).toLocaleString('fr-DZ')} DZD</td>
-                  <td>${parseFloat(item.subtotal).toLocaleString('fr-DZ')} DZD</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <h2>Totaux</h2>
-          <p>Sous-total: ${parseFloat(order.subtotal).toLocaleString('fr-DZ')} DZD</p>
-          ${order.discount_amount > 0 ? `<p>Reduction: -${parseFloat(order.discount_amount).toLocaleString('fr-DZ')} DZD</p>` : ''}
-          <p class="total">Total: ${parseFloat(order.total).toLocaleString('fr-DZ')} DZD</p>
-          <p><strong>Mode de paiement:</strong> ${order.payment_method}</p>
-          
-          <script>window.print(); window.onafterprint = function() { window.close(); };</script>
+          <main class="page">
+            <section class="frame">
+              <header class="header">
+                <img class="logo" src="${logoUrl}" alt="Intime & Co" />
+                <div>
+                  <h1 class="brand">INTIME & CO</h1>
+                  <p class="subtitle">Bon de livraison</p>
+                </div>
+                <div class="meta-card">
+                  <p>Commande</p>
+                  <strong>${escapeHtml(order.order_number)}</strong>
+                  <p style="margin-top:8px;">Date: ${escapeHtml(orderDate)}</p>
+                </div>
+              </header>
+
+              <div class="content">
+                <div class="grid">
+                  <section class="info-box">
+                    <h2 class="section-title">Client</h2>
+                    <p><strong>Nom:</strong> ${escapeHtml(order.customer_name)}</p>
+                    <p><strong>Telephone:</strong> ${escapeHtml(order.customer_phone)}</p>
+                  </section>
+                  <section class="info-box">
+                    <h2 class="section-title">Livraison</h2>
+                    <p><strong>Adresse:</strong> ${escapeHtml(order.address)}</p>
+                    <p><strong>Commune:</strong> ${escapeHtml(order.commune)}</p>
+                    <p><strong>Wilaya:</strong> ${escapeHtml(order.wilaya)}</p>
+                  </section>
+                </div>
+
+                <h2 class="section-title">Articles commandes</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Produit</th>
+                      <th>Taille</th>
+                      <th>Couleur</th>
+                      <th>Qte</th>
+                      <th>Prix</th>
+                      <th>Sous-total</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rowsHtml}</tbody>
+                </table>
+
+                <section class="summary">
+                  <div class="note">
+                    <strong>Mode de paiement:</strong> ${escapeHtml(order.payment_method)}<br />
+                    Merci de verifier les articles et les informations client avant expedition.
+                  </div>
+                  <div class="totals">
+                    <div class="total-row">
+                      <span>Sous-total</span>
+                      <strong>${formatDzd(order.subtotal)}</strong>
+                    </div>
+                    ${order.discount_amount > 0 ? `
+                    <div class="total-row discount">
+                      <span>Reduction${order.promo_code ? ` (${escapeHtml(order.promo_code)})` : ''}</span>
+                      <strong>-${formatDzd(order.discount_amount)}</strong>
+                    </div>` : ''}
+                    <div class="total-row final">
+                      <span>Total</span>
+                      <strong>${formatDzd(order.total)}</strong>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <footer class="footer">
+                <span>Intime & Co</span>
+                <span>Commande creee le ${escapeHtml(orderDateTime)}</span>
+              </footer>
+            </section>
+          </main>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() { window.close(); };
+            };
+          </script>
         </body>
       </html>
     `);
