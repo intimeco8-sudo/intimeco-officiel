@@ -41,9 +41,10 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
   useEffect(() => {
     if (!product) return;
+    const firstColor = getProductColorOptions(product)[0]?.color || null;
     setCurrentImage(0);
     setSelectedSize(null);
-    setSelectedColor(null);
+    setSelectedColor(firstColor);
     setQty(1);
   }, [product]);
 
