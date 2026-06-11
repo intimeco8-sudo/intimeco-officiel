@@ -33,7 +33,11 @@ const PAYMENT_METHODS = [
     },
 ];
 
-function InputField({ label, id, type = 'text', placeholder, value, onChange, required, children }) {
+function getPhoneDigits(value) {
+    return String(value || '').replace(/\D/g, '').slice(0, 10);
+}
+
+function InputField({ label, id, type = 'text', placeholder, value, onChange, required, children, ...inputProps }) {
     return (
         <div className="flex flex-col gap-1.5">
             <label htmlFor={id} className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
@@ -47,6 +51,7 @@ function InputField({ label, id, type = 'text', placeholder, value, onChange, re
                     value={value}
                     onChange={onChange}
                     required={required}
+                    {...inputProps}
                     className="border border-[#EBB4BB] rounded-xl px-4 font-sans text-[#1C2340] placeholder-[#9CA3AF] outline-none focus:border-[#1C2340] transition-colors"
                     style={{ height: '52px', fontSize: '15px' }}
                 />
@@ -102,12 +107,19 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
 
     async function handleSubmit(e) {
         e.preventDefault();
+        const phoneDigits = getPhoneDigits(form.phone);
+
+        if (phoneDigits.length !== 10) {
+            alert('Le numero de telephone doit contenir exactement 10 chiffres.');
+            return;
+        }
+
         setSubmitting(true);
 
         try {
             const orderData = {
                 customerName: form.fullName,
-                customerPhone: form.phone,
+                customerPhone: phoneDigits,
                 address: form.address,
                 wilaya: form.wilaya,
                 commune: form.commune,
@@ -194,9 +206,14 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
                                         label="Numero de telephone"
                                         id="phone"
                                         type="tel"
-                                        placeholder="0XXX XX XX XX"
+                                        placeholder="0555123456"
                                         value={form.phone}
-                                        onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                                        onChange={(e) => setForm((p) => ({ ...p, phone: getPhoneDigits(e.target.value) }))}
+                                        inputMode="numeric"
+                                        pattern="[0-9]{10}"
+                                        minLength={10}
+                                        maxLength={10}
+                                        title="Le numero doit contenir exactement 10 chiffres"
                                         required
                                     />
 
