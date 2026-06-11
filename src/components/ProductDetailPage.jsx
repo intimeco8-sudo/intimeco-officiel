@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Heart, Minus, Plus, ChevronDown } from 'lucide-react';
-import { getProductImages } from '../utils/productImages';
+import { PRODUCT_IMAGE_PLACEHOLDER } from '../utils/productImages';
 import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } from '../utils/productVariants';
 
 function Accordion({ title, children }) {
@@ -33,7 +33,7 @@ function Accordion({ title, children }) {
 export default function ProductDetailPage({ product, onClose, onAddToCart, onWishlist, wishlist }) {
   const [currentImage, setCurrentImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(getProductColorOptions(product)?.[0]?.color ?? null);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [qty, setQty] = useState(1);
   const [heartPulsing, setHeartPulsing] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -43,7 +43,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
     if (!product) return;
     setCurrentImage(0);
     setSelectedSize(null);
-    setSelectedColor(getProductColorOptions(product)?.[0]?.color ?? null);
+    setSelectedColor(null);
     setQty(1);
   }, [product]);
 
@@ -66,12 +66,20 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
   if (!product) return null;
 
-  const productImages = getProductImages(product);
-  const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
   const productColors = getProductColorOptions(product);
+  const selectedColorOption = productColors.find((color) => color.color === selectedColor);
+  const baseImages = Array.isArray(product.images)
+    ? product.images.filter((image) => typeof image === 'string' && image.trim())
+    : [];
+  const productImages = [
+    ...(selectedColorOption?.image ? [selectedColorOption.image] : []),
+    ...baseImages,
+  ].filter((image, index, list) => list.indexOf(image) === index);
+  const visibleImages = productImages.length > 0 ? productImages : [PRODUCT_IMAGE_PLACEHOLDER];
+  const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
   const availableSizes = selectedColor ? getAvailableSizesForColor(product, selectedColor) : productSizes;
   const selectedStock = getVariantStock(product, selectedColor, selectedSize);
-  const canAddToCart = availableSizes.length > 0 && (!selectedSize || selectedStock > 0);
+  const canAddToCart = Boolean(selectedColor && selectedSize && selectedStock > 0 && qty <= selectedStock);
 
   function handleWishlist() {
     setHeartPulsing(true);
@@ -87,11 +95,8 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
   function handleColorSelect(color) {
     setSelectedColor(color.color);
+    setCurrentImage(0);
     setQty(1);
-    if (color.image) {
-      const imageIndex = productImages.indexOf(color.image);
-      if (imageIndex >= 0) setCurrentImage(imageIndex);
-    }
     if (selectedSize && !getAvailableSizesForColor(product, color.color).includes(selectedSize)) {
       setSelectedSize(null);
     }
@@ -130,24 +135,24 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
         {/* Image carousel */}
         <div className="relative bg-[#FDE8EC] flex-none" style={{ minHeight: '320px' }}>
           <img
-            src={productImages[currentImage]}
+            src={visibleImages[currentImage]}
             alt={`${product.name} — vue ${currentImage + 1}`}
             className="w-full object-cover"
             style={{ height: '340px' }}
           />
 
           {/* Arrow buttons */}
-          {productImages.length > 1 && (
+          {visibleImages.length > 1 && (
             <>
               <button
-                onClick={() => setCurrentImage((i) => (i === 0 ? productImages.length - 1 : i - 1))}
+                onClick={() => setCurrentImage((i) => (i === 0 ? visibleImages.length - 1 : i - 1))}
                 aria-label="Image precedente"
                 className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-white/80"
               >
                 <ChevronLeft size={18} color="#1C2340" strokeWidth={1.8} />
               </button>
               <button
-                onClick={() => setCurrentImage((i) => (i === productImages.length - 1 ? 0 : i + 1))}
+                onClick={() => setCurrentImage((i) => (i === visibleImages.length - 1 ? 0 : i + 1))}
                 aria-label="Image suivante"
                 className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-white/80"
               >
@@ -158,7 +163,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
 
           {/* Dot indicators */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {productImages.map((_, i) => (
+            {visibleImages.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentImage(i)}
@@ -298,9 +303,10 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
                 {qty}
               </span>
               <button
-                onClick={() => setQty((q) => selectedSize ? Math.min(selectedStock, q + 1) : q + 1)}
+                onClick={() => setQty((q) => selectedSize ? Math.min(selectedStock, q + 1) : q)}
+                disabled={!selectedSize || selectedStock <= 0 || qty >= selectedStock}
                 aria-label="Augmenter la quantite"
-                className="flex items-center justify-center hover:bg-[#FDE8EC] transition-colors"
+                className="flex items-center justify-center hover:bg-[#FDE8EC] transition-colors disabled:opacity-40"
                 style={{ width: '44px', height: '44px' }}
               >
                 <Plus size={16} color="#1C2340" strokeWidth={1.8} />
@@ -322,7 +328,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
               className="w-full bg-[#1C2340] text-white font-sans font-semibold rounded-full hover:bg-[#2D375F] transition-colors duration-200 disabled:opacity-50"
               style={{ height: '52px', fontSize: '15px', letterSpacing: '0.04em' }}
             >
-              {canAddToCart ? 'Ajouter au panier' : 'Indisponible'}
+              {canAddToCart ? 'Ajouter au panier' : 'Choisissez couleur et taille'}
             </button>
             <button
               id="detail-add-to-favorites"
@@ -383,7 +389,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             className="flex-1 max-w-[200px] bg-[#1C2340] text-white font-sans font-semibold rounded-full disabled:opacity-50"
             style={{ height: '48px', fontSize: '14px' }}
           >
-            {canAddToCart ? 'Ajouter au panier' : 'Indisponible'}
+            {canAddToCart ? 'Ajouter au panier' : 'Choisissez couleur et taille'}
           </button>
         </div>
       )}

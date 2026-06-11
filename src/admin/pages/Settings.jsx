@@ -91,14 +91,17 @@ export default function Settings() {
                         <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
                             Texte de l'annonce
                         </label>
-                        <input
-                            type="text"
+                        <textarea
                             value={formData.announcement_text}
                             onChange={(e) => setFormData((prev) => ({ ...prev, announcement_text: e.target.value }))}
-                            className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                            rows={3}
+                            className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340] resize-y"
                             style={{ fontSize: '14px' }}
                             placeholder="Livraison gratuite des 3000 DZD d'achat..."
                         />
+                        <p className="font-sans text-[#9CA3AF] mt-1" style={{ fontSize: '12px' }}>
+                            Le texte defile sur une seule ligne dans la boutique.
+                        </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

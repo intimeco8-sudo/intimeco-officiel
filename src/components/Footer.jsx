@@ -29,13 +29,12 @@ function FacebookIcon({ size = 18, color = 'white' }) {
 }
 
 const NAV_LINKS = [
-  { label: 'Accueil', href: '#hero' },
-  { label: 'Collections', href: '#categories' },
-  { label: 'Promotions', href: '#catalog' },
-  { label: 'Notre Boutique', href: '#boutique' },
-  { label: 'Contact', href: '#contact' },
-  { label: 'Politique de retour', href: '#contact' },
-  { label: 'FAQ', href: '#contact' },
+  { label: 'Accueil', href: '/#hero' },
+  { label: 'Collections', href: '/#categories' },
+  { label: 'Promotions', href: '/#catalog' },
+  { label: 'Boutique & Contact', href: '/boutique-contact' },
+  { label: 'Politique de retour', href: '/boutique-contact' },
+  { label: 'FAQ', href: '/boutique-contact' },
 ];
 
 export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
@@ -54,10 +53,10 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
   }
 
   return (
-    <footer className="bg-[#1C2340] text-white pt-12 pb-6 px-4">
+    <footer className="bg-[#11162B] text-white pt-12 pb-6 px-4">
       <div className="max-w-screen-xl mx-auto">
         {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10" data-reveal="soft">
           {/* Column 1: Logo + description */}
           <div className="flex flex-col items-start gap-4">
             <div className="flex items-center gap-3">

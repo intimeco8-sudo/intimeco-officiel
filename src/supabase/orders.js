@@ -75,15 +75,13 @@ export async function fetchOrderById(id) {
 }
 
 export async function updateOrderStatus(id, status) {
-    const { data, error } = await supabase
-        .from('orders')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
+    const { data, error } = await supabase.rpc('update_order_status', {
+        order_id: id,
+        new_status: status,
+    });
 
     if (error) throw error;
-    return data;
+    return Array.isArray(data) ? data[0] : data;
 }
 
 export async function updateOrderNotes(id, notes) {

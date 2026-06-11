@@ -29,10 +29,10 @@ export default function NouveautesCarousel({ onAddToCart, onWishlist, wishlist, 
   }
 
   return (
-    <section id="nouveautes" className="py-10 bg-[#FDE8EC]">
+    <section id="nouveautes" className="py-12 soft-band">
       <div className="max-w-screen-xl mx-auto px-4">
         {/* Header */}
-        <div className="flex items-end justify-between mb-6">
+        <div className="flex items-end justify-between mb-6" data-reveal="soft">
           <div>
             <h2
               className="font-serif text-[#1C2340]"
@@ -75,10 +75,11 @@ export default function NouveautesCarousel({ onAddToCart, onWishlist, wishlist, 
           className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory"
           style={{ scrollPaddingLeft: '0px' }}
         >
-          {nouveautes.map((product) => (
+          {nouveautes.map((product, index) => (
             <div
               key={product.id}
-              className="flex-none snap-start"
+              className={`flex-none snap-start stagger-${Math.min(index + 1, 5)}`}
+              data-reveal="soft"
               style={{ width: 'clamp(160px, 44vw, 220px)' }}
             >
               <ProductCard

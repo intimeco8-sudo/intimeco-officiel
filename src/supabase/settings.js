@@ -1,5 +1,17 @@
 import { supabase } from './client';
 
+export const SETTINGS_UPDATED_EVENT = 'intime-settings-updated';
+
+export function notifySettingsChanged() {
+    const timestamp = String(Date.now());
+    try {
+        window.localStorage.setItem(SETTINGS_UPDATED_EVENT, timestamp);
+    } catch {
+        // Local storage can be unavailable in private contexts; realtime/focus refresh still works.
+    }
+    window.dispatchEvent(new CustomEvent(SETTINGS_UPDATED_EVENT));
+}
+
 export async function fetchSettings() {
     const { data, error } = await supabase.from('settings').select('*');
 
@@ -32,6 +44,7 @@ export async function updateSetting(key, value) {
         .single();
 
     if (error) throw error;
+    notifySettingsChanged();
     return data;
 }
 
@@ -48,6 +61,7 @@ export async function bulkUpdateSettings(settingsObj) {
         .select();
 
     if (error) throw error;
+    notifySettingsChanged();
     return data;
 }
 

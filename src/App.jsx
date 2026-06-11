@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import './index.css';
 import useStoreSettings from './hooks/useStoreSettings';
+import useScrollReveal from './hooks/useScrollReveal';
 
 import Navbar from './components/Navbar';
 import AnnouncementStrip from './components/AnnouncementStrip';
@@ -13,17 +14,25 @@ import ProductCatalog from './components/ProductCatalog';
 import PromoBanner from './components/PromoBanner';
 import BrandStory from './components/BrandStory';
 import StoreBoutique from './components/StoreBoutique';
-import ContactSection from './components/ContactSection';
 import Footer from './components/Footer';
 import ProductDetailPage from './components/ProductDetailPage';
 import CartDrawer from './components/CartDrawer';
 import CheckoutPage from './components/CheckoutPageWithSupabase';
 import Toast from './components/Toast';
-import { getAvailableSizesForColor, getProductColorOptions } from './utils/productVariants';
+import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } from './utils/productVariants';
 
 let toastCounter = 0;
 
+function getPageFromHash() {
+  return window.location.pathname === '/boutique-contact'
+    || ['#boutique-contact', '#boutique', '#contact'].includes(window.location.hash)
+    ? 'boutique-contact'
+    : 'home';
+}
+
 export default function App() {
+  useScrollReveal();
+
   // UI state
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -31,6 +40,7 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState(null);
+  const [activePage, setActivePage] = useState(getPageFromHash);
 
   // Data state
   const storeSettings = useStoreSettings();
@@ -38,6 +48,19 @@ export default function App() {
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [toasts, setToasts] = useState([]);
+
+  useEffect(() => {
+    function handleRouteChange() {
+      setActivePage(getPageFromHash());
+    }
+
+    window.addEventListener('hashchange', handleRouteChange);
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('hashchange', handleRouteChange);
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
 
   // Toast helper
   const addToast = useCallback((message) => {
@@ -52,11 +75,15 @@ export default function App() {
   // Cart operations
   function addToCart(product, selectedSize, selectedColor, qty = 1) {
     const colorOptions = getProductColorOptions(product);
-    const fallbackColor = selectedColor ?? colorOptions[0]?.color ?? product.colors?.[0] ?? null;
+    const firstAvailableColor = colorOptions.find((option) =>
+      getAvailableSizesForColor(product, option.color).length > 0
+    )?.color;
+    const fallbackColor = selectedColor ?? firstAvailableColor ?? colorOptions[0]?.color ?? product.colors?.[0] ?? null;
     const availableSizes = fallbackColor ? getAvailableSizesForColor(product, fallbackColor) : [];
     const fallbackSize = selectedSize ?? availableSizes[0] ?? product.sizes?.[0] ?? null;
+    const availableStock = getVariantStock(product, fallbackColor, fallbackSize);
 
-    if (!fallbackSize || (!selectedSize && fallbackColor && availableSizes.length === 0)) {
+    if (!fallbackSize || availableStock <= 0 || (!selectedSize && fallbackColor && availableSizes.length === 0)) {
       addToast('Produit indisponible');
       return;
     }
@@ -66,19 +93,25 @@ export default function App() {
         (i) => i.id === product.id && i.selectedSize === fallbackSize && i.selectedColor === fallbackColor
       );
       if (existing) {
+        const nextQty = Math.min(availableStock, existing.qty + qty);
+        if (nextQty === existing.qty) {
+          addToast('Stock maximum atteint');
+          return prev;
+        }
         return prev.map((i) =>
           i.id === product.id && i.selectedSize === fallbackSize && i.selectedColor === fallbackColor
-            ? { ...i, qty: i.qty + qty }
+            ? { ...i, qty: nextQty }
             : i
         );
       }
+      const cartQty = Math.min(availableStock, qty);
       return [
         ...prev,
         {
           ...product,
           selectedSize: fallbackSize,
           selectedColor: fallbackColor,
-          qty,
+          qty: cartQty,
         },
       ];
     });
@@ -91,10 +124,19 @@ export default function App() {
       removeFromCart(item);
       return;
     }
+    const availableStock = getVariantStock(item, item.selectedColor, item.selectedSize);
+    const safeQty = Math.min(newQty, availableStock);
+    if (safeQty <= 0) {
+      removeFromCart(item);
+      return;
+    }
+    if (safeQty < newQty) {
+      addToast('Stock maximum atteint');
+    }
     setCartItems((prev) =>
       prev.map((i) =>
         i.id === item.id && i.selectedSize === item.selectedSize && i.selectedColor === item.selectedColor
-          ? { ...i, qty: newQty }
+          ? { ...i, qty: safeQty }
           : i
       )
     );
@@ -134,6 +176,10 @@ export default function App() {
 
   // Scroll to catalog on hero CTA
   function handleShopClick() {
+    if (activePage !== 'home') {
+      window.location.href = '/#catalog';
+      return;
+    }
     const el = document.getElementById('catalog');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -167,7 +213,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDE8EC]">
+    <div className="min-h-screen bg-[#FDE8EC] site-shell">
       {/* Navigation */}
       <Navbar
         cartCount={cartCount}
@@ -217,46 +263,43 @@ export default function App() {
         />
       )}
 
-      {/* Page sections */}
-      <main>
-        {/* 1. Hero */}
-        <HeroSection onShopClick={handleShopClick} />
-
-        {/* 2. Category tiles */}
-        <CategoryTiles
-          onCategorySelect={handleCategorySelect}
-          activeCategory={activeCategoryFilter}
-        />
-
-        {/* 3. Nouveautes carousel */}
-        <NouveautesCarousel
-          onAddToCart={addToCart}
-          onWishlist={toggleWishlist}
-          wishlist={wishlist}
-          onCardClick={setSelectedProduct}
-        />
-
-        {/* 4. Product catalog */}
-        <ProductCatalog
-          onAddToCart={addToCart}
-          onWishlist={toggleWishlist}
-          wishlist={wishlist}
-          onCardClick={setSelectedProduct}
-          initialCategory={activeCategoryFilter}
-        />
-
-        {/* 5. Promo banner */}
-        <PromoBanner />
-
-        {/* 6. Brand story */}
-        <BrandStory />
-
-        {/* 7. Notre Boutique */}
+      {activePage === 'boutique-contact' ? (
         <StoreBoutique settings={storeSettings} />
+      ) : (
+        <main>
+          {/* 1. Hero */}
+          <HeroSection onShopClick={handleShopClick} />
 
-        {/* 8. Contact */}
-        <ContactSection settings={storeSettings} />
-      </main>
+          {/* 2. Category tiles */}
+          <CategoryTiles
+            onCategorySelect={handleCategorySelect}
+            activeCategory={activeCategoryFilter}
+          />
+
+          {/* 3. Nouveautes carousel */}
+          <NouveautesCarousel
+            onAddToCart={addToCart}
+            onWishlist={toggleWishlist}
+            wishlist={wishlist}
+            onCardClick={setSelectedProduct}
+          />
+
+          {/* 4. Product catalog */}
+          <ProductCatalog
+            onAddToCart={addToCart}
+            onWishlist={toggleWishlist}
+            wishlist={wishlist}
+            onCardClick={setSelectedProduct}
+            initialCategory={activeCategoryFilter}
+          />
+
+          {/* 5. Promo banner */}
+          <PromoBanner />
+
+          {/* 6. Brand story */}
+          <BrandStory />
+        </main>
+      )}
 
       {/* Footer */}
       <Footer settings={storeSettings} />

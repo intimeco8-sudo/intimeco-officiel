@@ -2,6 +2,21 @@ import { supabase } from './client';
 import { deleteProductImages } from './storage';
 import { getProductVariantImages } from '../utils/productVariants';
 
+function normalizeProduct(product) {
+    if (!product) return product;
+
+    const price = Number.parseFloat(product.price);
+    const originalPrice = product.original_price === null || product.original_price === undefined
+        ? null
+        : Number.parseFloat(product.original_price);
+
+    return {
+        ...product,
+        price: Number.isFinite(price) ? price : 0,
+        originalPrice: Number.isFinite(originalPrice) ? originalPrice : null,
+    };
+}
+
 export async function fetchProducts({
     category = null,
     minPrice = 0,
@@ -42,7 +57,7 @@ export async function fetchProducts({
 
     if (error) throw error;
 
-    return { products: data || [], total: count || 0 };
+    return { products: (data || []).map(normalizeProduct), total: count || 0 };
 }
 
 export async function fetchProductById(id) {
@@ -53,7 +68,7 @@ export async function fetchProductById(id) {
         .single();
 
     if (error) throw error;
-    return data;
+    return normalizeProduct(data);
 }
 
 export async function createProduct(product) {
@@ -64,7 +79,7 @@ export async function createProduct(product) {
         .single();
 
     if (error) throw error;
-    return data;
+    return normalizeProduct(data);
 }
 
 export async function updateProduct(id, updates) {
@@ -76,7 +91,7 @@ export async function updateProduct(id, updates) {
         .single();
 
     if (error) throw error;
-    return data;
+    return normalizeProduct(data);
 }
 
 export async function deleteProduct(id) {

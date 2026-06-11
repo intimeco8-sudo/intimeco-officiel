@@ -4,7 +4,7 @@ export default function PromoBanner() {
   return (
     <section
       className="relative overflow-hidden py-12 px-6"
-      style={{ background: 'linear-gradient(135deg, #1C2340 0%, #2D375F 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #11162B 0%, #1C2340 55%, #2D375F 100%)' }}
     >
       {/* Botanical decorations */}
       <div className="absolute top-0 left-0 pointer-events-none opacity-20" aria-hidden="true">
@@ -15,7 +15,7 @@ export default function PromoBanner() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-screen-md mx-auto text-center">
+      <div className="relative z-10 max-w-screen-md mx-auto text-center" data-reveal="soft">
         <p
           className="font-script text-[#F9D7DA] mb-3"
           style={{ fontSize: '20px', letterSpacing: '0.04em' }}
@@ -41,7 +41,7 @@ export default function PromoBanner() {
           className="inline-flex items-center justify-center mt-6 bg-[#F9D7DA] text-[#1C2340] font-sans font-semibold rounded-full hover:bg-white transition-colors duration-200"
           style={{ height: '52px', padding: '0 36px', fontSize: '15px', letterSpacing: '0.04em' }}
         >
-          Voir les promotions
+          Commander les promotions
         </a>
       </div>
     </section>

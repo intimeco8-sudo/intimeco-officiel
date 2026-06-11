@@ -1,18 +1,17 @@
 import { Menu, Search, ShoppingBag } from 'lucide-react';
 
 const DESKTOP_LINKS = [
-  { label: 'Accueil', href: '#hero' },
-  { label: 'Collections', href: '#categories' },
-  { label: 'Nouveautes', href: '#nouveautes' },
-  { label: 'Promotions', href: '#catalog' },
-  { label: 'Notre Boutique', href: '#boutique' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Accueil', href: '/#hero' },
+  { label: 'Collections', href: '/#categories' },
+  { label: 'Nouveautes', href: '/#nouveautes' },
+  { label: 'Promotions', href: '/#catalog' },
+  { label: 'Boutique & Contact', href: '/boutique-contact' },
 ];
 
 export default function Navbar({ cartCount, onMenuOpen, onCartOpen, onSearchOpen }) {
   return (
     <header
-      className="sticky top-0 z-50 bg-white border-b border-[#F9D7DA]"
+      className="sticky top-0 z-50 bg-white/92 border-b border-[#F9D7DA] nav-glass"
       style={{ height: '64px' }}
     >
       <div
@@ -30,7 +29,7 @@ export default function Navbar({ cartCount, onMenuOpen, onCartOpen, onSearchOpen
           </button>
 
           <a
-            href="#hero"
+            href="/#hero"
             className="flex items-center select-none min-w-0"
             aria-label="Intime & Co - Accueil"
           >

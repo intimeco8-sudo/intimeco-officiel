@@ -8,7 +8,7 @@
 
 html, body {
   font-family: 'Jost', sans-serif;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   font-size: 15px;
   background-color: #FDE8EC;
   color: #1C2340;
@@ -20,11 +20,32 @@ html, body {
 }
 
 html {
+  scroll-behavior: smooth;
   scroll-padding-top: 76px;
 }
 
 section[id] {
   scroll-margin-top: 76px;
+}
+
+.site-shell {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0) 28rem),
+    #FDE8EC;
+}
+
+main > section {
+  position: relative;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid #1C2340;
+  outline-offset: 3px;
 }
 
 /* =============================================
@@ -64,6 +85,15 @@ section[id] {
   will-change: transform;
 }
 
+.announcement-strip {
+  min-height: 40px;
+  padding-block: 7px;
+}
+
+.announcement-strip .animate-marquee {
+  align-items: center;
+}
+
 /* =============================================
    HERO FADE-UP ENTRANCE
    ============================================= */
@@ -84,6 +114,54 @@ section[id] {
 .animation-delay-200 { animation-delay: 200ms; }
 .animation-delay-400 { animation-delay: 400ms; }
 .animation-delay-600 { animation-delay: 600ms; }
+
+.hero-logo {
+  border: 4px solid rgba(255, 255, 255, 0.86);
+  box-shadow:
+    0 22px 54px rgba(28, 35, 64, 0.15),
+    0 0 0 1px rgba(235, 180, 187, 0.48);
+}
+
+.hero-botanical {
+  filter: drop-shadow(0 16px 22px rgba(28, 35, 64, 0.06));
+}
+
+/* =============================================
+   SCROLL REVEAL ANIMATIONS
+   ============================================= */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0);
+  transition:
+    opacity 720ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal="soft"] {
+  transform: translate3d(0, 16px, 0) scale(0.985);
+}
+
+[data-reveal="left"] {
+  transform: translate3d(-22px, 0, 0);
+}
+
+[data-reveal="right"] {
+  transform: translate3d(22px, 0, 0);
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  will-change: auto;
+}
+
+.stagger-1 { --reveal-delay: 80ms; }
+.stagger-2 { --reveal-delay: 140ms; }
+.stagger-3 { --reveal-delay: 200ms; }
+.stagger-4 { --reveal-delay: 260ms; }
+.stagger-5 { --reveal-delay: 320ms; }
 
 /* =============================================
    HEART PULSE
@@ -136,6 +214,21 @@ section[id] {
               opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+.cart-drawer {
+  transform: translate3d(0, 105%, 0);
+}
+
+.cart-drawer.is-open {
+  transform: translate3d(0, 0, 0);
+}
+
+@media (min-width: 768px) {
+  .cart-drawer {
+    transform: translate3d(105%, 0, 0);
+    max-height: 100vh !important;
+  }
+}
+
 /* =============================================
    CUSTOM SCROLLBAR
    ============================================= */
@@ -166,25 +259,37 @@ section[id] {
    PRODUCT CARD HOVER
    ============================================= */
 .product-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(249, 215, 218, 0.82);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 .product-card:hover {
-  transform: translateY(-3px) scale(1.015);
-  box-shadow: 0 12px 40px rgba(28, 35, 64, 0.13);
+  transform: translateY(-4px);
+  border-color: rgba(235, 180, 187, 0.9);
+  box-shadow: 0 18px 42px rgba(28, 35, 64, 0.12);
 }
 .product-card:active {
   transform: scale(0.98);
+}
+
+.product-card img {
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.035);
+  filter: saturate(1.04);
 }
 
 /* =============================================
    CATEGORY TILE HOVER
    ============================================= */
 .category-tile {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
 }
 .category-tile:hover {
-  transform: scale(1.03);
-  box-shadow: 0 8px 32px rgba(28, 35, 64, 0.15);
+  transform: translateY(-3px) scale(1.015);
+  filter: saturate(1.04);
+  box-shadow: 0 16px 36px rgba(28, 35, 64, 0.14);
 }
 .category-tile:active {
   transform: scale(0.97);
@@ -195,6 +300,135 @@ section[id] {
    ============================================= */
 button:active, a:active {
   opacity: 0.88;
+}
+
+.surface-lift {
+  box-shadow: 0 18px 50px rgba(28, 35, 64, 0.11);
+  border: 1px solid rgba(249, 215, 218, 0.85);
+}
+
+.soft-band {
+  background:
+    radial-gradient(circle at 8% 12%, rgba(255,255,255,0.62), transparent 18rem),
+    radial-gradient(circle at 92% 24%, rgba(245,198,203,0.56), transparent 20rem),
+    #FDE8EC;
+}
+
+.nav-glass {
+  box-shadow: 0 8px 28px rgba(28, 35, 64, 0.06);
+  backdrop-filter: saturate(1.08) blur(10px);
+}
+
+.boutique-contact-page {
+  min-height: calc(100svh - 64px);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(255,255,255,0.58), transparent 18rem),
+    radial-gradient(circle at 92% 18%, rgba(253,232,236,0.82), transparent 22rem),
+    #F5C6CB;
+}
+
+/* =============================================
+   CONTACT TARGET PANEL
+   ============================================= */
+.contact-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding-top: calc(76px + env(safe-area-inset-top, 0px));
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.contact-overlay:target {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.contact-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 35, 64, 0.44);
+  backdrop-filter: blur(4px);
+}
+
+.contact-overlay__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 620px);
+  max-height: calc(100svh - 120px);
+  overflow: auto;
+  border-radius: 18px;
+  padding: clamp(22px, 4vw, 36px);
+  box-shadow: 0 30px 80px rgba(28, 35, 64, 0.24);
+  transform: translateY(18px) scale(0.98);
+  transition: transform 0.28s ease;
+}
+
+.contact-overlay:target .contact-overlay__panel {
+  transform: translateY(0) scale(1);
+}
+
+.contact-overlay:target [data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+/* =============================================
+   BOUTIQUE TARGET PANEL
+   ============================================= */
+.boutique-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 69;
+  display: grid;
+  place-items: center;
+  padding: calc(76px + env(safe-area-inset-top, 0px)) 16px max(24px, env(safe-area-inset-bottom, 0px));
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+
+.boutique-overlay:target {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.boutique-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 35, 64, 0.44);
+  backdrop-filter: blur(4px);
+}
+
+.boutique-overlay__panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1100px);
+  max-height: calc(100svh - 120px);
+  overflow: auto;
+  border-radius: 18px;
+  background: #F5C6CB;
+  padding: clamp(22px, 4vw, 40px);
+  box-shadow: 0 30px 80px rgba(28, 35, 64, 0.24);
+  transform: translateY(18px) scale(0.98);
+  transition: transform 0.28s ease;
+}
+
+.boutique-overlay:target .boutique-overlay__panel {
+  transform: translateY(0) scale(1);
+}
+
+.boutique-overlay:target [data-reveal] {
+  opacity: 1;
+  transform: none;
 }
 
 /* =============================================
@@ -255,5 +489,9 @@ input[type=range]::-moz-range-thumb {
   .animate-marquee {
     animation: none !important;
     white-space: normal !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

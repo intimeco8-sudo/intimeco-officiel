@@ -1,7 +1,8 @@
 
 export default function AnnouncementStrip({ text }) {
-  const announcements = text
-    ? [text]
+  const cleanText = String(text || '').trim();
+  const announcements = cleanText
+    ? [cleanText]
     : [
       "Livraison gratuite des 3000 DZD d'achat",
       "Nouvelles collections disponibles",
@@ -13,9 +14,8 @@ export default function AnnouncementStrip({ text }) {
 
   return (
     <div
-      className="w-full overflow-hidden flex items-center select-none relative z-20"
+      className="announcement-strip w-full overflow-hidden flex items-center select-none relative z-20"
       style={{
-        height: '34px',
         background: '#F9D7DA',
         borderBottom: '1px solid #EBB4BB',
       }}
@@ -26,7 +26,7 @@ export default function AnnouncementStrip({ text }) {
           <div key={index} className="flex items-center flex-none">
             <span
               className="font-serif italic text-[#1C2340] whitespace-nowrap"
-              style={{ padding: '0 28px', fontSize: '13px', letterSpacing: '0.05em' }}
+              style={{ padding: '0 28px', fontSize: '13px', letterSpacing: '0.04em', lineHeight: 1.35 }}
             >
               {text}
             </span>

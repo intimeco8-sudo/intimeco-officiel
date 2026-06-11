@@ -3,12 +3,11 @@ import { X } from 'lucide-react';
 import BotanicalSVG from './BotanicalSVG';
 
 const NAV_LINKS = [
-  { label: 'Accueil', href: '#hero' },
-  { label: 'Collections', href: '#categories' },
-  { label: 'Nouveautes', href: '#nouveautes' },
-  { label: 'Promotions', href: '#catalog' },
-  { label: 'Notre Boutique', href: '#boutique' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'Accueil', href: '/#hero' },
+  { label: 'Collections', href: '/#categories' },
+  { label: 'Nouveautes', href: '/#nouveautes' },
+  { label: 'Promotions', href: '/#catalog' },
+  { label: 'Boutique & Contact', href: '/boutique-contact' },
 ];
 
 // TikTok icon as inline SVG (not available in lucide-react)

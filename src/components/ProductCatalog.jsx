@@ -260,19 +260,25 @@ export default function ProductCatalog({
   const hasActiveFilters = advFilters.sizes.length > 0 || advFilters.colors.length > 0 || advFilters.priceMax !== null;
 
   return (
-    <section id="catalog" className="py-10 max-w-screen-xl mx-auto px-4">
+    <section id="catalog" className="py-12 max-w-screen-xl mx-auto px-4">
       {/* Title */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-6" data-reveal="soft">
         <h2
           className="font-serif text-[#1C2340]"
           style={{ fontSize: '22px', letterSpacing: '0.08em', fontWeight: 600 }}
         >
-          Notre Catalogue
+          Acheter Nos Pieces
         </h2>
+        <p
+          className="font-sans text-[#9CA3AF] mt-1 italic"
+          style={{ fontSize: '15px' }}
+        >
+          Filtrez, choisissez votre taille et ajoutez au panier
+        </p>
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto scrollbar-hide pb-1" data-reveal="soft">
         {/* Filtres button */}
         <button
           id="open-filters-btn"
@@ -368,15 +374,20 @@ export default function ProductCatalog({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filtered.map((product) => (
-            <ProductCard
+          {filtered.map((product, index) => (
+            <div
               key={product.id}
-              product={product}
-              onAddToCart={onAddToCart}
-              onWishlist={onWishlist}
-              isWishlisted={wishlist.includes(product.id)}
-              onCardClick={onCardClick}
-            />
+              className={`stagger-${Math.min((index % 6) + 1, 5)}`}
+              data-reveal="soft"
+            >
+              <ProductCard
+                product={product}
+                onAddToCart={onAddToCart}
+                onWishlist={onWishlist}
+                isWishlisted={wishlist.includes(product.id)}
+                onCardClick={onCardClick}
+              />
+            </div>
           ))}
         </div>
       )}

@@ -124,7 +124,7 @@ export default function CheckoutPage({ cartItems, onBack, onConfirm, settings = 
             onConfirm?.();
         } catch (error) {
             console.error('Erreur lors de la creation de la commande:', error);
-            alert('Erreur lors de la creation de la commande. Veuillez reessayer.');
+            alert(error?.message || 'Erreur lors de la creation de la commande. Veuillez reessayer.');
         } finally {
             setSubmitting(false);
         }

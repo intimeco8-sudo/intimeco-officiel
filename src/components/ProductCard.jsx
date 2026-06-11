@@ -43,10 +43,10 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
 
   return (
     <article
-      className="product-card bg-white rounded-xl overflow-hidden cursor-pointer select-none flex flex-col"
+      className="product-card bg-white rounded-lg overflow-hidden cursor-pointer select-none flex flex-col h-full"
       style={{
-        boxShadow: '0 4px 20px rgba(249,215,218,0.6)',
-        borderRadius: '12px',
+        boxShadow: '0 8px 28px rgba(249,215,218,0.55)',
+        borderRadius: '8px',
       }}
       onClick={() => onCardClick(product)}
       role="button"
@@ -61,7 +61,7 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
           alt={product.name}
           loading="lazy"
           className="absolute inset-0 w-full h-full object-cover"
-          style={{ borderRadius: '12px 12px 0 0' }}
+          style={{ borderRadius: '8px 8px 0 0' }}
         />
 
         {/* Badge */}

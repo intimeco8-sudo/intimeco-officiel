@@ -16,10 +16,10 @@ const PILLARS = [
 
 export default function BrandStory() {
   return (
-    <section className="py-14 px-4 bg-white">
+    <section className="py-16 px-4 bg-white">
       <div className="max-w-screen-xl mx-auto">
         {/* Title */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-10" data-reveal="soft">
           <p
             className="font-script text-[#EBB4BB] mb-1"
             style={{ fontSize: '22px' }}
@@ -46,7 +46,8 @@ export default function BrandStory() {
           {PILLARS.map((p, i) => (
             <div
               key={i}
-              className="flex flex-col items-center text-center p-6 rounded-2xl bg-[#FDE8EC]"
+              className={`flex flex-col items-center text-center p-6 rounded-lg bg-[#FDE8EC] surface-lift stagger-${i + 1}`}
+              data-reveal="soft"
             >
               {/* Decorative number */}
               <span

@@ -1,4 +1,4 @@
-import { Phone, MapPin } from 'lucide-react';
+import { MapPin, Phone, X } from 'lucide-react';
 import { DEFAULT_STORE_SETTINGS, getPhoneHref } from '../hooks/useStoreSettings';
 
 function InstagramIcon({ size = 20, color = '#1C2340' }) {
@@ -20,33 +20,42 @@ export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
   const instagramLabel = instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
 
   return (
-    <section id="contact" className="py-14 px-4 bg-white">
-      <div className="max-w-screen-md mx-auto">
-        {/* Title */}
-        <div className="text-center mb-10">
-          <h2
-            className="font-serif text-[#1C2340]"
-            style={{ fontSize: '22px', letterSpacing: '0.08em', fontWeight: 600 }}
+    <section id="contact" className="contact-overlay px-4" aria-label="Contact">
+      <a className="contact-overlay__backdrop" href="#catalog" aria-label="Fermer le contact" />
+
+      <div className="contact-overlay__panel bg-white" data-reveal="soft">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div>
+            <h2
+              className="font-serif text-[#1C2340]"
+              style={{ fontSize: '24px', letterSpacing: '0.08em', fontWeight: 600 }}
+            >
+              Contactez-nous
+            </h2>
+            <p
+              className="font-sans text-[#9CA3AF] italic mt-1"
+              style={{ fontSize: '15px' }}
+            >
+              Une question avant de commander ?
+            </p>
+          </div>
+
+          <a
+            href="#catalog"
+            aria-label="Fermer le contact"
+            className="flex-none flex items-center justify-center w-11 h-11 rounded-full bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200"
           >
-            Contactez-nous
-          </h2>
-          <p
-            className="font-sans text-[#9CA3AF] italic mt-1"
-            style={{ fontSize: '15px' }}
-          >
-            Nous sommes a votre ecoute
-          </p>
+            <X size={20} color="#1C2340" strokeWidth={1.8} />
+          </a>
         </div>
 
-        {/* Contact rows */}
         <div className="space-y-4">
-          {/* Instagram */}
           <a
             href={instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             id="contact-instagram"
-            className="flex items-center gap-4 p-5 rounded-2xl bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group"
+            className="flex items-center gap-4 p-5 rounded-lg bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group surface-lift"
           >
             <div
               className="flex-none flex items-center justify-center rounded-full bg-white"
@@ -62,18 +71,12 @@ export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
                 {instagramLabel}
               </p>
             </div>
-            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C2340" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 17L17 7M7 7h10v10"/>
-              </svg>
-            </div>
           </a>
 
-          {/* Phone */}
           <a
             href={getPhoneHref(phone)}
             id="contact-phone"
-            className="flex items-center gap-4 p-5 rounded-2xl bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group"
+            className="flex items-center gap-4 p-5 rounded-lg bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group surface-lift"
           >
             <div
               className="flex-none flex items-center justify-center rounded-full bg-white"
@@ -89,20 +92,14 @@ export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
                 {phone}
               </p>
             </div>
-            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C2340" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 17L17 7M7 7h10v10"/>
-              </svg>
-            </div>
           </a>
 
-          {/* Location */}
           <a
             href={MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
             id="contact-location"
-            className="flex items-center gap-4 p-5 rounded-2xl bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group"
+            className="flex items-center gap-4 p-5 rounded-lg bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group surface-lift"
           >
             <div
               className="flex-none flex items-center justify-center rounded-full bg-white"
@@ -117,11 +114,6 @@ export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
               <p className="font-sans text-[#5A6080]" style={{ fontSize: '15px' }}>
                 {address}
               </p>
-            </div>
-            <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C2340" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 17L17 7M7 7h10v10"/>
-              </svg>
             </div>
           </a>
         </div>

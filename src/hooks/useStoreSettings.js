@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchSettings, subscribeToSettings } from '../supabase/settings';
+import { SETTINGS_UPDATED_EVENT, fetchSettings, subscribeToSettings } from '../supabase/settings';
 
 export const DEFAULT_STORE_SETTINGS = {
     store_name: 'Intime & Co',
@@ -41,6 +41,22 @@ export default function useStoreSettings() {
 
         loadSettings();
 
+        const handleSettingsRefresh = () => {
+            loadSettings();
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                loadSettings();
+            }
+        };
+
+        const handleStorage = (event) => {
+            if (event.key === SETTINGS_UPDATED_EVENT) {
+                loadSettings();
+            }
+        };
+
         const unsubscribe = subscribeToSettings((payload) => {
             const next = payload?.new;
             if (next?.key) {
@@ -48,8 +64,17 @@ export default function useStoreSettings() {
             }
         });
 
+        window.addEventListener(SETTINGS_UPDATED_EVENT, handleSettingsRefresh);
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('focus', handleSettingsRefresh);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
             mounted = false;
+            window.removeEventListener(SETTINGS_UPDATED_EVENT, handleSettingsRefresh);
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('focus', handleSettingsRefresh);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             unsubscribe();
         };
     }, []);

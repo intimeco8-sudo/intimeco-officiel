@@ -80,11 +80,10 @@ export default function CartDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="Panier"
-        className="fixed z-50 bg-white flex flex-col transition-sheet overscroll-contain
+        className={`cart-drawer fixed z-50 bg-white flex flex-col transition-sheet overscroll-contain ${isOpen ? 'is-open' : ''}
                    bottom-0 left-0 right-0 rounded-t-2xl
-                   md:inset-y-0 md:right-0 md:left-auto md:rounded-none md:rounded-l-2xl"
+                   md:inset-y-0 md:right-0 md:left-auto md:rounded-none md:rounded-l-2xl`}
         style={{
-          transform: isOpen ? 'translateY(0) translateX(0)' : 'translateY(100%)',
           maxHeight: '92vh',
           maxWidth: '400px',
           width: '100%',

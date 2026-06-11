@@ -104,9 +104,9 @@ function CategoryIllustration({ id, accent }) {
 
 export default function CategoryTiles({ onCategorySelect, activeCategory }) {
   return (
-    <section id="categories" className="py-10 px-4 max-w-screen-xl mx-auto">
+    <section id="categories" className="py-12 px-4 max-w-screen-xl mx-auto">
       {/* Section title */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-8" data-reveal="soft">
         <h2
           className="font-serif text-[#1C2340]"
           style={{ fontSize: '22px', letterSpacing: '0.08em', fontWeight: 600 }}
@@ -117,13 +117,13 @@ export default function CategoryTiles({ onCategorySelect, activeCategory }) {
           className="font-sans text-[#9CA3AF] mt-1 italic"
           style={{ fontSize: '15px' }}
         >
-          Explorez chaque univers
+          Choisissez une categorie et trouvez votre piece
         </p>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {CATEGORIES.map((cat) => {
+        {CATEGORIES.map((cat, index) => {
           const isActive = activeCategory === cat.id;
           return (
             <div
@@ -133,7 +133,8 @@ export default function CategoryTiles({ onCategorySelect, activeCategory }) {
               tabIndex={0}
               onClick={() => onCategorySelect(isActive ? null : cat.id)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCategorySelect(isActive ? null : cat.id); } }}
-              className="category-tile rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1C2340] focus:ring-offset-2"
+              className={`category-tile rounded-lg overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#1C2340] focus:ring-offset-2 stagger-${Math.min(index + 1, 5)}`}
+              data-reveal="soft"
               style={{
                 background: cat.bg,
                 position: 'relative',
