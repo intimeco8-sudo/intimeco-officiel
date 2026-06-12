@@ -125,6 +125,20 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT auth.role() = 'authenticated'
+    AND (
+      auth.jwt()->'app_metadata'->>'role' = 'admin'
+      OR auth.jwt()->'app_metadata'->>'admin' = 'true'
+    );
+$$;
+
 -- Products: public read (is_active = true), authenticated write
 DROP POLICY IF EXISTS "Public can read active products" ON products;
 CREATE POLICY "Public can read active products"
@@ -132,36 +146,36 @@ CREATE POLICY "Public can read active products"
   USING (is_active = true);
 
 DROP POLICY IF EXISTS "Authenticated users can do all on products" ON products;
-CREATE POLICY "Authenticated users can do all on products"
+DROP POLICY IF EXISTS "Admins can do all on products" ON products;
+CREATE POLICY "Admins can do all on products"
   ON products FOR ALL
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
--- Orders: insert allowed for anonymous, authenticated full access
+-- Orders: checkout inserts must go through create_checkout_order RPC; admins can read/update
 DROP POLICY IF EXISTS "Anyone can insert orders" ON orders;
-CREATE POLICY "Anyone can insert orders"
-  ON orders FOR INSERT
-  WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Authenticated users can read all orders" ON orders;
-CREATE POLICY "Authenticated users can read all orders"
+DROP POLICY IF EXISTS "Admins can read all orders" ON orders;
+CREATE POLICY "Admins can read all orders"
   ON orders FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin());
 
 DROP POLICY IF EXISTS "Authenticated users can update orders" ON orders;
-CREATE POLICY "Authenticated users can update orders"
+DROP POLICY IF EXISTS "Admins can update orders" ON orders;
+CREATE POLICY "Admins can update orders"
   ON orders FOR UPDATE
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
--- Order items: same as orders
+-- Order items: checkout inserts must go through create_checkout_order RPC; admins can read
 DROP POLICY IF EXISTS "Anyone can insert order_items" ON order_items;
-CREATE POLICY "Anyone can insert order_items"
-  ON order_items FOR INSERT
-  WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Authenticated users can read order_items" ON order_items;
-CREATE POLICY "Authenticated users can read order_items"
+DROP POLICY IF EXISTS "Admins can read order_items" ON order_items;
+CREATE POLICY "Admins can read order_items"
   ON order_items FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin());
 
 -- Promo codes: public can read for validation, authenticated full access
 DROP POLICY IF EXISTS "Public can read active promo codes for validation" ON promo_codes;
@@ -170,9 +184,11 @@ CREATE POLICY "Public can read active promo codes for validation"
   USING (is_active = true);
 
 DROP POLICY IF EXISTS "Authenticated users can do all on promo_codes" ON promo_codes;
-CREATE POLICY "Authenticated users can do all on promo_codes"
+DROP POLICY IF EXISTS "Admins can do all on promo_codes" ON promo_codes;
+CREATE POLICY "Admins can do all on promo_codes"
   ON promo_codes FOR ALL
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
 -- Settings: public read, authenticated write
 DROP POLICY IF EXISTS "Public can read settings" ON settings;
@@ -181,9 +197,11 @@ CREATE POLICY "Public can read settings"
   USING (true);
 
 DROP POLICY IF EXISTS "Authenticated users can write settings" ON settings;
-CREATE POLICY "Authenticated users can write settings"
+DROP POLICY IF EXISTS "Admins can write settings" ON settings;
+CREATE POLICY "Admins can write settings"
   ON settings FOR ALL
-  USING (auth.role() = 'authenticated');
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
 -- =============================================
 -- SEED DATA: settings
@@ -248,20 +266,20 @@ CREATE POLICY "Authenticated users can upload product images"
 ON storage.objects
 FOR INSERT
 TO authenticated
-WITH CHECK (bucket_id = 'product-images');
+WITH CHECK (bucket_id = 'product-images' AND public.is_admin());
 
 CREATE POLICY "Authenticated users can update product images"
 ON storage.objects
 FOR UPDATE
 TO authenticated
-USING (bucket_id = 'product-images')
-WITH CHECK (bucket_id = 'product-images');
+USING (bucket_id = 'product-images' AND public.is_admin())
+WITH CHECK (bucket_id = 'product-images' AND public.is_admin());
 
 CREATE POLICY "Authenticated users can delete product images"
 ON storage.objects
 FOR DELETE
 TO authenticated
-USING (bucket_id = 'product-images');
+USING (bucket_id = 'product-images' AND public.is_admin());
 
 -- =============================================
 -- RPC: public checkout order creation
@@ -283,9 +301,20 @@ DECLARE
   product_record public.products%ROWTYPE;
   available_stock integer;
   promo text := nullif(order_data->>'promoCode', '');
+  product_subtotal numeric(10,2) := 0;
+  delivery_fee numeric(10,2) := 0;
+  free_delivery_threshold numeric(10,2) := 0;
+  discount_amount numeric(10,2) := 0;
+  order_subtotal numeric(10,2) := 0;
+  order_total numeric(10,2) := 0;
+  promo_record public.promo_codes%ROWTYPE;
 BEGIN
   IF jsonb_typeof(cart_items) <> 'array' OR jsonb_array_length(cart_items) = 0 THEN
     RAISE EXCEPTION 'cart_items must be a non-empty array';
+  END IF;
+
+  IF jsonb_array_length(cart_items) > 100 THEN
+    RAISE EXCEPTION 'Panier trop volumineux';
   END IF;
 
   FOR item IN SELECT value FROM jsonb_array_elements(cart_items)
@@ -324,7 +353,55 @@ BEGIN
     IF available_stock < item_quantity THEN
       RAISE EXCEPTION 'Stock insuffisant pour %', product_record.name;
     END IF;
+
+    product_subtotal := product_subtotal + (product_record.price * item_quantity);
   END LOOP;
+
+  SELECT COALESCE(NULLIF(value, '')::numeric, 0)
+  INTO delivery_fee
+  FROM public.settings
+  WHERE key = 'delivery_fee';
+
+  SELECT COALESCE(NULLIF(value, '')::numeric, 0)
+  INTO free_delivery_threshold
+  FROM public.settings
+  WHERE key = 'free_delivery_threshold';
+
+  delivery_fee := COALESCE(delivery_fee, 0);
+  free_delivery_threshold := COALESCE(free_delivery_threshold, 0);
+
+  IF free_delivery_threshold > 0 AND product_subtotal >= free_delivery_threshold THEN
+    delivery_fee := 0;
+  END IF;
+
+  IF promo IS NOT NULL THEN
+    SELECT *
+    INTO promo_record
+    FROM public.promo_codes
+    WHERE upper(code) = upper(promo)
+      AND is_active = true
+      AND (expires_at IS NULL OR expires_at > now())
+      AND (max_uses IS NULL OR COALESCE(used_count, 0) < max_uses)
+      AND product_subtotal >= COALESCE(min_order, 0)
+    LIMIT 1;
+
+    IF FOUND THEN
+      IF promo_record.discount_type = 'percent' THEN
+        discount_amount := round((product_subtotal * promo_record.discount_value) / 100);
+      ELSIF promo_record.discount_type = 'fixed' THEN
+        discount_amount := promo_record.discount_value;
+      END IF;
+
+      discount_amount := LEAST(discount_amount, product_subtotal);
+      promo := promo_record.code;
+    ELSE
+      promo := NULL;
+      discount_amount := 0;
+    END IF;
+  END IF;
+
+  order_subtotal := product_subtotal + delivery_fee;
+  order_total := GREATEST(0, order_subtotal - discount_amount);
 
   INSERT INTO public.orders (
     id,
@@ -351,9 +428,9 @@ BEGIN
     order_data->>'commune',
     order_data->>'paymentMethod',
     promo,
-    COALESCE((order_data->>'discountAmount')::numeric, 0),
-    (order_data->>'subtotal')::numeric,
-    (order_data->>'total')::numeric,
+    discount_amount,
+    order_subtotal,
+    order_total,
     nullif(order_data->>'notes', '')
   );
 
@@ -361,6 +438,12 @@ BEGIN
   LOOP
     item_product_id := nullif(item->>'id', '')::uuid;
     item_quantity := COALESCE((item->>'qty')::integer, 1);
+
+    SELECT p.*
+    INTO product_record
+    FROM public.products p
+    WHERE p.id = item_product_id
+      AND p.is_active = true;
 
     INSERT INTO public.order_items (
       order_id,
@@ -375,12 +458,12 @@ BEGIN
     VALUES (
       new_order_id,
       item_product_id,
-      item->>'name',
-      (item->>'price')::numeric,
+      product_record.name,
+      product_record.price,
       nullif(item->>'selectedSize', ''),
       nullif(item->>'selectedColor', ''),
       item_quantity,
-      (item->>'price')::numeric * item_quantity
+      product_record.price * item_quantity
     );
 
   END LOOP;
@@ -432,6 +515,10 @@ DECLARE
   updated_variants jsonb;
   accepted_statuses text[] := ARRAY['confirme', 'en_preparation', 'expedie', 'livre'];
 BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Admin privileges required';
+  END IF;
+
   IF new_status <> ALL (ARRAY['en_attente', 'confirme', 'en_preparation', 'expedie', 'livre', 'annule']) THEN
     RAISE EXCEPTION 'Statut invalide';
   END IF;

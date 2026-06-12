@@ -1,6 +1,91 @@
--- Checkout RPC for public order creation.
--- Keeps orders/products private while allowing anonymous checkout.
+-- INTIME & CO - Security hardening migration for existing Supabase projects
+-- Run this in Supabase SQL Editor before deploying the current app.
 
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  SELECT auth.role() = 'authenticated'
+    AND (
+      auth.jwt()->'app_metadata'->>'role' = 'admin'
+      OR auth.jwt()->'app_metadata'->>'admin' = 'true'
+    );
+$$;
+
+-- Product/admin data is writable only by users with app_metadata.role = "admin".
+DROP POLICY IF EXISTS "Authenticated users can do all on products" ON products;
+DROP POLICY IF EXISTS "Admins can do all on products" ON products;
+CREATE POLICY "Admins can do all on products"
+  ON products FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Checkout must go through create_checkout_order; no direct anonymous order inserts.
+DROP POLICY IF EXISTS "Anyone can insert orders" ON orders;
+DROP POLICY IF EXISTS "Authenticated users can read all orders" ON orders;
+DROP POLICY IF EXISTS "Admins can read all orders" ON orders;
+CREATE POLICY "Admins can read all orders"
+  ON orders FOR SELECT
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Authenticated users can update orders" ON orders;
+DROP POLICY IF EXISTS "Admins can update orders" ON orders;
+CREATE POLICY "Admins can update orders"
+  ON orders FOR UPDATE
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Anyone can insert order_items" ON order_items;
+DROP POLICY IF EXISTS "Authenticated users can read order_items" ON order_items;
+DROP POLICY IF EXISTS "Admins can read order_items" ON order_items;
+CREATE POLICY "Admins can read order_items"
+  ON order_items FOR SELECT
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Authenticated users can do all on promo_codes" ON promo_codes;
+DROP POLICY IF EXISTS "Admins can do all on promo_codes" ON promo_codes;
+CREATE POLICY "Admins can do all on promo_codes"
+  ON promo_codes FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Authenticated users can write settings" ON settings;
+DROP POLICY IF EXISTS "Admins can write settings" ON settings;
+CREATE POLICY "Admins can write settings"
+  ON settings FOR ALL
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Storage image writes are admin-only.
+DROP POLICY IF EXISTS "Authenticated users can upload images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload product images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update product images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete product images" ON storage.objects;
+
+CREATE POLICY "Authenticated users can upload product images"
+ON storage.objects
+FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'product-images' AND public.is_admin());
+
+CREATE POLICY "Authenticated users can update product images"
+ON storage.objects
+FOR UPDATE
+TO authenticated
+USING (bucket_id = 'product-images' AND public.is_admin())
+WITH CHECK (bucket_id = 'product-images' AND public.is_admin());
+
+CREATE POLICY "Authenticated users can delete product images"
+ON storage.objects
+FOR DELETE
+TO authenticated
+USING (bucket_id = 'product-images' AND public.is_admin());
+
+-- Replace checkout RPC so prices, delivery, promo discount, subtotal, and total are calculated server-side.
 CREATE OR REPLACE FUNCTION public.create_checkout_order(order_data jsonb, cart_items jsonb)
 RETURNS TABLE (id uuid, order_number text)
 LANGUAGE plpgsql
@@ -182,7 +267,6 @@ BEGIN
       item_quantity,
       product_record.price * item_quantity
     );
-
   END LOOP;
 
   RETURN QUERY SELECT new_order_id, new_order_number;
@@ -192,22 +276,7 @@ $$;
 REVOKE ALL ON FUNCTION public.create_checkout_order(jsonb, jsonb) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.create_checkout_order(jsonb, jsonb) TO anon, authenticated;
 
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS stock_deducted boolean DEFAULT false;
-
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-  SELECT auth.role() = 'authenticated'
-    AND (
-      auth.jwt()->'app_metadata'->>'role' = 'admin'
-      OR auth.jwt()->'app_metadata'->>'admin' = 'true'
-    );
-$$;
-
+-- Recreate status RPC with an admin check.
 CREATE OR REPLACE FUNCTION public.update_order_status(order_id uuid, new_status text)
 RETURNS public.orders
 LANGUAGE plpgsql

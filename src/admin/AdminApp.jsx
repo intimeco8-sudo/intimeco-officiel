@@ -8,6 +8,11 @@ import PromoCodes from './pages/PromoCodes';
 import Settings from './pages/Settings';
 import AdminNav from './components/AdminNav';
 
+function isAdminSession(session) {
+    const metadata = session?.user?.app_metadata || {};
+    return metadata.role === 'admin' || metadata.admin === true;
+}
+
 export default function AdminApp() {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -42,7 +47,7 @@ export default function AdminApp() {
         );
     }
 
-    if (!session) {
+    if (!session || !isAdminSession(session)) {
         return <Login onSuccess={(session) => setSession(session)} />;
     }
 

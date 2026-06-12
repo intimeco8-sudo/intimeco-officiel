@@ -2,6 +2,11 @@ import { useState } from 'react';
 import { supabase } from '../../supabase/client';
 import { Lock } from 'lucide-react';
 
+function isAdminSession(session) {
+    const metadata = session?.user?.app_metadata || {};
+    return metadata.role === 'admin' || metadata.admin === true;
+}
+
 export default function Login({ onSuccess }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -25,9 +30,13 @@ export default function Login({ onSuccess }) {
             return;
         }
 
-        if (data.session) {
+        if (data.session && isAdminSession(data.session)) {
             onSuccess(data.session);
+            return;
         }
+
+        await supabase.auth.signOut();
+        setError('Acces admin non autorise');
     };
 
     return (
