@@ -1,5 +1,5 @@
 import { ArrowRight, Gem, HeartHandshake, MapPinned, ShieldCheck, Sparkles, Truck } from 'lucide-react';
-import heroImage from '../assets/hero.png';
+import storyImage from '../assets/notre-histoire-boutique.png';
 
 const PILLARS = [
   {
@@ -26,7 +26,7 @@ const VALUES = [
 ];
 
 const TIMELINE = [
-  { year: '01', title: 'Une idee nee a Blida', body: 'Creer une boutique ou la lingerie fine reste accessible, elegante et proche des femmes d ici.' },
+  { year: '01', title: 'Une idee nee a Draa El Mizan', body: 'Creer une boutique a Draa El Mizan, situee a Tizi Ouzou, ou la lingerie fine reste accessible, elegante et proche des femmes d ici.' },
   { year: '02', title: 'Une selection plus exigeante', body: 'Chaque arrivee est observee, comparee et retenue pour sa matiere, sa coupe et sa finition.' },
   { year: '03', title: 'Une boutique plus proche', body: 'La boutique en ligne prolonge l experience: voir, choisir, commander, puis recevoir partout en Algerie.' },
 ];
@@ -44,7 +44,7 @@ export default function BrandStory() {
               Une lingerie choisie avec douceur, exigence et presence
             </h1>
             <p className="font-sans text-[#5A6080] leading-relaxed mt-5" style={{ fontSize: '16px', maxWidth: '620px' }}>
-              Intime &amp; Co est nee a Blida d une envie simple: proposer des pieces feminines, confortables et raffinees,
+              Intime &amp; Co est nee a Draa El Mizan, situee a Tizi Ouzou, d une envie simple: proposer des pieces feminines, confortables et raffinees,
               avec une experience aussi soignee que la selection.
             </p>
             <div className="brand-story-actions">
@@ -59,10 +59,10 @@ export default function BrandStory() {
           </div>
 
           <div className="brand-story-visual" data-reveal="right">
-            <img src={heroImage} alt="Selection Intime & Co" />
+            <img src={storyImage} alt="Facade de la boutique Intime & Co" />
             <div className="brand-story-visual__note">
               <Sparkles size={18} strokeWidth={1.8} />
-              <span>Selection delicate depuis Blida</span>
+              <span>Selection delicate depuis Draa El Mizan, Tizi Ouzou</span>
             </div>
           </div>
         </div>

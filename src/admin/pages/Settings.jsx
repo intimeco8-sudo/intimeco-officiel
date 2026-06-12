@@ -236,7 +236,7 @@ export default function Settings() {
                             onChange={(e) => setFormData((prev) => ({ ...prev, store_address: e.target.value }))}
                             className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
                             style={{ fontSize: '14px' }}
-                            placeholder="Blida, Algerie"
+                            placeholder="Draa El Mizan, Tizi Ouzou, Algerie"
                         />
                     </div>
 

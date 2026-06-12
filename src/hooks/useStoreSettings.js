@@ -12,7 +12,7 @@ export const DEFAULT_STORE_SETTINGS = {
     promo_banner_cta: 'Commander les promotions',
     instagram_url: 'https://www.instagram.com/inti.me15',
     store_phone: '+213 555 00 00 00',
-    store_address: 'Blida, Algerie',
+    store_address: 'Draa El Mizan, Tizi Ouzou, Algerie',
     store_hours: 'Lun-Sam : 09h00 - 19h00',
 };
 
