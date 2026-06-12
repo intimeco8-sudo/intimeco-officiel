@@ -261,10 +261,11 @@ export default function Products() {
                             <option value="">Toutes les categories</option>
                             <option value="Soutien-gorge">Soutien-gorge</option>
                             <option value="Ensembles">Ensembles</option>
-                            <option value="Culottes">Culottes</option>
+                            <option value="Culottes&Strings">Culottes&Strings</option>
                             <option value="Pyjamas">Pyjamas</option>
                             <option value="Nuisettes">Nuisettes</option>
                             <option value="Corsets">Corsets</option>
+                            <option value="Other">Other</option>
                         </select>
 
                         <select

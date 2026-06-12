@@ -94,7 +94,7 @@ INSERT INTO products (
   is_active
 ) VALUES (
   'Culotte taille haute nude',
-  'Culottes',
+  'Culottes&Strings',
   'Une culotte haute sans couture a effet gainant et discret sous les vetements. Un basique indispensable.',
   1200,
   NULL,

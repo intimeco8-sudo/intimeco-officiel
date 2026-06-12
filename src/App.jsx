@@ -294,7 +294,7 @@ export default function App() {
           />
 
           {/* 5. Promo banner */}
-          <PromoBanner />
+          <PromoBanner settings={storeSettings} />
 
           {/* 6. Brand story */}
           <BrandStory />

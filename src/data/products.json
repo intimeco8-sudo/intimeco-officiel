@@ -36,7 +36,7 @@
   {
     "id": 3,
     "name": "Culotte taille haute nude",
-    "category": "Culottes",
+    "category": "Culottes&Strings",
     "price": 1200,
     "originalPrice": null,
     "sizes": ["XS", "S", "M", "L", "XL"],
@@ -155,7 +155,7 @@
   {
     "id": 10,
     "name": "Shorty dentelle rouge",
-    "category": "Culottes",
+    "category": "Culottes&Strings",
     "price": 1400,
     "originalPrice": 1800,
     "sizes": ["XS", "S", "M", "L", "XL"],
@@ -223,7 +223,7 @@
   {
     "id": 14,
     "name": "Culotte dentelle lilas",
-    "category": "Culottes",
+    "category": "Culottes&Strings",
     "price": 1100,
     "originalPrice": null,
     "sizes": ["XS", "S", "M", "L", "XL"],

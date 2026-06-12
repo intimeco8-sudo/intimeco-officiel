@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchSettings, bulkUpdateSettings } from '../../supabase/settings';
+import { DEFAULT_STORE_SETTINGS } from '../../hooks/useStoreSettings';
 
 export default function Settings() {
     const [formData, setFormData] = useState({
@@ -7,6 +8,10 @@ export default function Settings() {
         announcement_text: '',
         delivery_fee: '',
         free_delivery_threshold: '',
+        promo_banner_eyebrow: '',
+        promo_banner_title: '',
+        promo_banner_description: '',
+        promo_banner_cta: '',
         instagram_url: '',
         store_phone: '',
         store_address: '',
@@ -26,6 +31,10 @@ export default function Settings() {
                     announcement_text: settings.announcement_text || '',
                     delivery_fee: settings.delivery_fee || '',
                     free_delivery_threshold: settings.free_delivery_threshold || '',
+                    promo_banner_eyebrow: settings.promo_banner_eyebrow || DEFAULT_STORE_SETTINGS.promo_banner_eyebrow,
+                    promo_banner_title: settings.promo_banner_title || DEFAULT_STORE_SETTINGS.promo_banner_title,
+                    promo_banner_description: settings.promo_banner_description || DEFAULT_STORE_SETTINGS.promo_banner_description,
+                    promo_banner_cta: settings.promo_banner_cta || DEFAULT_STORE_SETTINGS.promo_banner_cta,
                     instagram_url: settings.instagram_url || '',
                     store_phone: settings.store_phone || '',
                     store_address: settings.store_address || '',
@@ -134,6 +143,73 @@ export default function Settings() {
                                 style={{ fontSize: '14px' }}
                             />
                         </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#F9D7DA] bg-[#FDE8EC] px-4 py-3">
+                        <h3 className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '15px' }}>
+                            Offre exclusive
+                        </h3>
+                        <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '12px' }}>
+                            Texte visible dans la banniere promotionnelle de la boutique.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                Petit titre
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.promo_banner_eyebrow}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, promo_banner_eyebrow: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="Offre exclusive"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                Bouton
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.promo_banner_cta}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, promo_banner_cta: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="Commander les promotions"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                            Grand titre
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.promo_banner_title}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, promo_banner_title: e.target.value }))}
+                            className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                            style={{ fontSize: '14px' }}
+                            placeholder="Jusqu'a -30% sur les ensembles"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                            Description
+                        </label>
+                        <textarea
+                            value={formData.promo_banner_description}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, promo_banner_description: e.target.value }))}
+                            rows={3}
+                            className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340] resize-y"
+                            style={{ fontSize: '14px' }}
+                            placeholder="Profitez de nos promotions exceptionnelles..."
+                        />
                     </div>
 
                     <div>

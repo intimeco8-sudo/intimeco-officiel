@@ -106,7 +106,7 @@ export default function SearchModal({ isOpen, onClose, onAddToCart, onWishlist, 
               </p>
               {/* Quick category links */}
               <div className="flex flex-wrap gap-2 justify-center mt-5">
-                {['Soutien-gorge', 'Ensembles', 'Pyjamas', 'Culottes', 'Corsets', 'Nuisettes'].map((c) => (
+                {['Soutien-gorge', 'Ensembles', 'Pyjamas', 'Culottes&Strings', 'Corsets', 'Nuisettes', 'Other'].map((c) => (
                   <button
                     key={c}
                     onClick={() => setQuery(c)}

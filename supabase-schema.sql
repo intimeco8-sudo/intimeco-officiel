@@ -25,14 +25,16 @@ CREATE TABLE IF NOT EXISTS products (
 ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_options jsonb DEFAULT '[]'::jsonb;
 
 ALTER TABLE products DROP CONSTRAINT IF EXISTS products_category_check;
+UPDATE products SET category = 'Culottes&Strings' WHERE category = 'Culottes';
 ALTER TABLE products ADD CONSTRAINT products_category_check
   CHECK (category = ANY (ARRAY[
     'Soutien-gorge',
     'Ensembles',
-    'Culottes',
+    'Culottes&Strings',
     'Pyjamas',
     'Nuisettes',
-    'Corsets'
+    'Corsets',
+    'Other'
   ]));
 
 ALTER TABLE products DROP CONSTRAINT IF EXISTS products_badge_check;
@@ -191,6 +193,10 @@ INSERT INTO settings (key, value) VALUES
 ('announcement_text', 'Livraison gratuite des 3000 DZD d''achat — Paiement a la livraison disponible'),
 ('delivery_fee', '500'),
 ('free_delivery_threshold', '3000'),
+('promo_banner_eyebrow', 'Offre exclusive'),
+('promo_banner_title', 'Jusqu''a -30% sur les ensembles'),
+('promo_banner_description', 'Profitez de nos promotions exceptionnelles sur une selection de nos plus belles pieces. Livraison gratuite des 3 000 DZD d''achat.'),
+('promo_banner_cta', 'Commander les promotions'),
 ('instagram_url', 'https://www.instagram.com/inti.me15'),
 ('store_phone', ''),
 ('store_address', 'Blida, Algerie'),

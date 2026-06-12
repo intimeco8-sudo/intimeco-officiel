@@ -3,7 +3,7 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { fetchProducts } from '../supabase/products';
 
-const CATEGORIES = ['Tout', 'Soutien-gorge', 'Ensembles', 'Culottes', 'Pyjamas', 'Nuisettes', 'Corsets'];
+const CATEGORIES = ['Tout', 'Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
 const SORT_OPTIONS = [
   { label: 'Nouveautes', value: 'new' },
   { label: 'Prix croissant', value: 'price-asc' },

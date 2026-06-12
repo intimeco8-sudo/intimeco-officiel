@@ -1,6 +1,12 @@
 import BotanicalSVG from './BotanicalSVG';
+import { DEFAULT_STORE_SETTINGS } from '../hooks/useStoreSettings';
 
-export default function PromoBanner() {
+export default function PromoBanner({ settings = DEFAULT_STORE_SETTINGS }) {
+  const eyebrow = settings.promo_banner_eyebrow || DEFAULT_STORE_SETTINGS.promo_banner_eyebrow;
+  const title = settings.promo_banner_title || DEFAULT_STORE_SETTINGS.promo_banner_title;
+  const description = settings.promo_banner_description || DEFAULT_STORE_SETTINGS.promo_banner_description;
+  const cta = settings.promo_banner_cta || DEFAULT_STORE_SETTINGS.promo_banner_cta;
+
   return (
     <section
       className="relative overflow-hidden py-12 px-6"
@@ -20,20 +26,19 @@ export default function PromoBanner() {
           className="font-script text-[#F9D7DA] mb-3"
           style={{ fontSize: '20px', letterSpacing: '0.04em' }}
         >
-          Offre exclusive
+          {eyebrow}
         </p>
         <h2
           className="font-serif text-white leading-tight"
           style={{ fontSize: '32px', fontWeight: 600 }}
         >
-          Jusqu&apos;a <span style={{ color: '#F9D7DA' }}>-30%</span> sur les ensembles
+          {title}
         </h2>
         <p
           className="font-sans text-white/70 mt-3 leading-relaxed"
           style={{ fontSize: '15px' }}
         >
-          Profitez de nos promotions exceptionnelles sur une selection de nos plus belles pieces.
-          Livraison gratuite des 3 000 DZD d&apos;achat.
+          {description}
         </p>
         <a
           href="#catalog"
@@ -41,7 +46,7 @@ export default function PromoBanner() {
           className="inline-flex items-center justify-center mt-6 bg-[#F9D7DA] text-[#1C2340] font-sans font-semibold rounded-full hover:bg-white transition-colors duration-200"
           style={{ height: '52px', padding: '0 36px', fontSize: '15px', letterSpacing: '0.04em' }}
         >
-          Commander les promotions
+          {cta}
         </a>
       </div>
     </section>

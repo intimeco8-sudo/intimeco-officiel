@@ -283,9 +283,89 @@ a {
 /* =============================================
    CATEGORY TILE HOVER
    ============================================= */
+.collection-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.collection-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.collection-controls button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid #EBB4BB;
+  background: rgba(255, 255, 255, 0.76);
+  color: #1C2340;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.collection-controls button:hover {
+  background: #FFFFFF;
+  border-color: #1C2340;
+  transform: translateY(-1px);
+}
+
+.collection-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  padding: 2px 2px 16px;
+}
+
 .category-tile {
   transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
 }
+
+.collection-card {
+  position: relative;
+  flex: 0 0 min(74vw, 310px);
+  min-height: 164px;
+  isolation: isolate;
+  scroll-snap-align: start;
+}
+
+.collection-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.collection-card__shine {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 38%),
+    radial-gradient(circle at 82% 18%, rgba(255,255,255,0.44), transparent 9rem);
+  opacity: 0.88;
+  z-index: 0;
+}
+
+.collection-card__content {
+  position: relative;
+  z-index: 1;
+  min-height: 164px;
+  height: 100%;
+  display: grid;
+  align-content: end;
+  padding: 18px;
+}
+
 .category-tile:hover {
   transform: translateY(-3px) scale(1.015);
   filter: saturate(1.04);
@@ -293,6 +373,21 @@ a {
 }
 .category-tile:active {
   transform: scale(0.97);
+}
+
+@media (max-width: 639px) {
+  .collection-heading {
+    align-items: flex-start;
+  }
+
+  .collection-card,
+  .collection-card__content {
+    min-height: 142px;
+  }
+
+  .collection-card__content {
+    padding: 16px;
+  }
 }
 
 /* =============================================

@@ -5,7 +5,7 @@ import { uploadProductImage, deleteProductImage } from '../../supabase/storage';
 import { COLOR_PALETTE, getColorMeta, getTotalVariantStock, normalizeProductVariants } from '../../utils/productVariants';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '85B', '90C', '95D'];
-const CATEGORIES = ['Soutien-gorge', 'Ensembles', 'Culottes', 'Pyjamas', 'Nuisettes', 'Corsets'];
+const CATEGORIES = ['Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
 
 function createVariant(color, sizes = []) {
     const meta = getColorMeta(color);
