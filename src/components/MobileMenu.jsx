@@ -7,6 +7,7 @@ const NAV_LINKS = [
   { label: 'Collections', href: '/#categories' },
   { label: 'Nouveautes', href: '/#nouveautes' },
   { label: 'Promotions', href: '/#catalog' },
+  { label: 'Notre histoire', href: '/notre-histoire' },
   { label: 'Boutique & Contact', href: '/boutique-contact' },
 ];
 

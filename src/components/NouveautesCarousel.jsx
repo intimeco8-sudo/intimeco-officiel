@@ -1,16 +1,16 @@
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './ProductCard';
-import { fetchProducts } from '../supabase/products';
+import { fetchProducts, getInitialProducts } from '../supabase/products';
 
 export default function NouveautesCarousel({ onAddToCart, onWishlist, wishlist, onCardClick }) {
   const scrollRef = useRef(null);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => getInitialProducts({ onlyActive: true, limit: 50 }));
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const result = await fetchProducts({ onlyActive: true, limit: 50 });
+        const result = await fetchProducts({ onlyActive: true, limit: 50, fallbackOnError: true });
         setProducts(result.products);
       } catch (error) {
         console.error('Erreur chargement nouveautes:', error);

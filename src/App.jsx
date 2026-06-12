@@ -24,10 +24,17 @@ import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } fr
 let toastCounter = 0;
 
 function getPageFromHash() {
-  return window.location.pathname === '/boutique-contact'
-    || ['#boutique-contact', '#boutique', '#contact'].includes(window.location.hash)
-    ? 'boutique-contact'
-    : 'home';
+  if (window.location.pathname === '/boutique-contact'
+    || ['#boutique-contact', '#boutique', '#contact'].includes(window.location.hash)) {
+    return 'boutique-contact';
+  }
+
+  if (window.location.pathname === '/notre-histoire'
+    || ['#notre-histoire', '#histoire'].includes(window.location.hash)) {
+    return 'notre-histoire';
+  }
+
+  return 'home';
 }
 
 export default function App() {
@@ -265,6 +272,8 @@ export default function App() {
 
       {activePage === 'boutique-contact' ? (
         <StoreBoutique settings={storeSettings} />
+      ) : activePage === 'notre-histoire' ? (
+        <BrandStory />
       ) : (
         <main>
           {/* 1. Hero */}
@@ -296,8 +305,6 @@ export default function App() {
           {/* 5. Promo banner */}
           <PromoBanner settings={storeSettings} />
 
-          {/* 6. Brand story */}
-          <BrandStory />
         </main>
       )}
 

@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import ProductCard from './ProductCard';
-import { fetchProducts } from '../supabase/products';
+import { fetchProducts, getInitialProducts } from '../supabase/products';
 
 export default function SearchModal({ isOpen, onClose, onAddToCart, onWishlist, wishlist, onCardClick }) {
   const [query, setQuery] = useState('');
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => getInitialProducts({ onlyActive: true, limit: 100 }));
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (isOpen && products.length === 0) {
+    if (isOpen) {
       const loadProducts = async () => {
         try {
-          const result = await fetchProducts({ onlyActive: true, limit: 100 });
+          const result = await fetchProducts({ onlyActive: true, limit: 100, fallbackOnError: true });
           setProducts(result.products);
         } catch (error) {
           console.error('Erreur chargement recherche:', error);

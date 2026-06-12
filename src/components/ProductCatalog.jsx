@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from './ProductCard';
-import { fetchProducts } from '../supabase/products';
+import { fetchProducts, getInitialProducts } from '../supabase/products';
 
 const CATEGORIES = ['Tout', 'Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
 const SORT_OPTIONS = [
@@ -205,13 +205,13 @@ export default function ProductCatalog({
   const [activeSort, setActiveSort] = useState('new');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [advFilters, setAdvFilters] = useState({ priceMax: null, sizes: [], colors: [] });
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => getInitialProducts({ onlyActive: true, limit: 1000 }));
 
   // Load products from Supabase
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const result = await fetchProducts({ onlyActive: true, limit: 1000 });
+        const result = await fetchProducts({ onlyActive: true, limit: 1000, fallbackOnError: true });
         setProducts(result.products);
       } catch (error) {
         console.error('Erreur chargement produits:', error);
