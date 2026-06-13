@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { fetchProducts, getInitialProducts } from '../supabase/products';
+import { COLOR_PALETTE, getProductColorOptions } from '../utils/productVariants';
 
 const CATEGORIES = ['Tout', 'Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
 const SORT_OPTIONS = [
@@ -11,19 +12,9 @@ const SORT_OPTIONS = [
   { label: 'Promotions', value: 'promo' },
 ];
 
-const COLOR_MAP = {
-  noir: '#1C1C1C',
-  rose: '#F4A7B9',
-  blanc: '#F8F8F8',
-  nude: '#D4A99A',
-  rouge: '#E63946',
-  lilas: '#C0A0D0',
-};
-
 const ALL_SIZES = ['XS', 'S', 'M', 'L', 'XL', '85B', '90C', '95D'];
-const ALL_COLORS = Object.keys(COLOR_MAP);
 
-function FilterBottomSheet({ isOpen, onClose, filters, setFilters, maxPrice }) {
+function FilterBottomSheet({ isOpen, onClose, filters, setFilters, maxPrice, colorOptions }) {
   const [local, setLocal] = useState({ ...filters });
 
   useEffect(() => {
@@ -153,21 +144,24 @@ function FilterBottomSheet({ isOpen, onClose, filters, setFilters, maxPrice }) {
               Couleur
             </p>
             <div className="flex flex-wrap gap-3">
-              {ALL_COLORS.map((c) => {
-                const active = local.colors.includes(c);
+              {colorOptions.map((color) => {
+                const active = local.colors.includes(color.value);
+                const needsDarkBorder = ['#FFFFFF', '#FFF', '#F8F8F8', '#FFF8E7'].includes(color.hex.toUpperCase());
                 return (
                   <button
-                    key={c}
-                    onClick={() => toggleArr('colors', c)}
+                    key={color.value}
+                    onClick={() => toggleArr('colors', color.value)}
                     aria-pressed={active}
-                    aria-label={c}
-                    title={c}
+                    aria-label={color.name}
+                    title={color.name}
                     className="rounded-full transition-all duration-150"
                     style={{
                       width: '32px',
                       height: '32px',
-                      background: COLOR_MAP[c],
-                      border: active ? '3px solid #1C2340' : '2px solid #EBB4BB',
+                      background: color.hex,
+                      border: active
+                        ? '3px solid #1C2340'
+                        : `2px solid ${needsDarkBorder ? '#D1D5DB' : '#EBB4BB'}`,
                       outline: active ? '2px solid white' : 'none',
                       outlineOffset: '-4px',
                     }}
@@ -241,7 +235,10 @@ export default function ProductCatalog({
       list = list.filter((p) => advFilters.sizes.some((s) => p.sizes.includes(s)));
     }
     if (advFilters.colors.length > 0) {
-      list = list.filter((p) => advFilters.colors.some((c) => p.colors.includes(c)));
+      list = list.filter((p) => {
+        const productColors = getProductColorOptions(p).map((color) => color.color);
+        return advFilters.colors.some((c) => productColors.includes(c));
+      });
     }
 
     // Sort
@@ -255,6 +252,23 @@ export default function ProductCatalog({
 
     return list;
   }, [products, activeCategory, activeSort, advFilters]);
+
+  const colorOptions = useMemo(() => {
+    const options = new Map(COLOR_PALETTE.map((color) => [color.value, color]));
+
+    products.forEach((product) => {
+      getProductColorOptions(product).forEach((color) => {
+        if (!color.color || options.has(color.color)) return;
+        options.set(color.color, {
+          value: color.color,
+          name: color.colorName || color.color,
+          hex: color.colorHex,
+        });
+      });
+    });
+
+    return Array.from(options.values());
+  }, [products]);
 
   const maxCatalogPrice = Math.max(10000, ...products.map((p) => Number(p.price) || 0));
   const hasActiveFilters = advFilters.sizes.length > 0 || advFilters.colors.length > 0 || advFilters.priceMax !== null;
@@ -399,6 +413,7 @@ export default function ProductCatalog({
         filters={advFilters}
         setFilters={setAdvFilters}
         maxPrice={maxCatalogPrice}
+        colorOptions={colorOptions}
       />
     </section>
   );
