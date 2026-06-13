@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import BotanicalSVG from './BotanicalSVG';
+import { DEFAULT_STORE_SETTINGS } from '../hooks/useStoreSettings';
 
 const NAV_LINKS = [
   { label: 'Accueil', href: '/#hero' },
@@ -144,7 +145,7 @@ export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
               <InstagramIcon size={20} color="#1C2340" />
             </a>
             <a
-              href="https://www.facebook.com"
+              href={DEFAULT_STORE_SETTINGS.facebook_url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -153,7 +154,7 @@ export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
               <FacebookIcon size={20} color="#1C2340" />
             </a>
             <a
-              href="https://www.tiktok.com"
+              href={DEFAULT_STORE_SETTINGS.tiktok_url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"

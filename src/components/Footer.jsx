@@ -43,6 +43,8 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
   const storeName = settings.store_name || DEFAULT_STORE_SETTINGS.store_name;
   const address = settings.store_address || DEFAULT_STORE_SETTINGS.store_address;
   const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
+  const facebookUrl = settings.facebook_url || DEFAULT_STORE_SETTINGS.facebook_url;
+  const tiktokUrl = settings.tiktok_url || DEFAULT_STORE_SETTINGS.tiktok_url;
 
   function handleSubscribe(e) {
     e.preventDefault();
@@ -148,7 +150,7 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
                 <InstagramIcon size={18} color="white" />
               </a>
               <a
-                href="https://www.facebook.com"
+                href={facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
@@ -157,7 +159,7 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
                 <FacebookIcon size={18} color="white" />
               </a>
               <a
-                href="https://www.tiktok.com"
+                href={tiktokUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"

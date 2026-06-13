@@ -11,6 +11,8 @@ export const DEFAULT_STORE_SETTINGS = {
     promo_banner_description: "Profitez de nos promotions exceptionnelles sur une selection de nos plus belles pieces. Livraison gratuite des 3 000 DZD d'achat.",
     promo_banner_cta: 'Commander les promotions',
     instagram_url: 'https://www.instagram.com/inti.me15',
+    facebook_url: 'https://www.facebook.com/profile.php?id=61581260086475',
+    tiktok_url: 'https://www.tiktok.com/@intime.co2?is_from_webapp=1&sender_device=pc',
     store_phone: '+213 555 00 00 00',
     store_address: 'Draa El Mizan, Tizi Ouzou, Algerie',
     store_hours: 'Lun-Sam : 09h00 - 19h00',
