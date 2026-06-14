@@ -13,6 +13,9 @@ export default function Settings() {
         promo_banner_description: '',
         promo_banner_cta: '',
         instagram_url: '',
+        facebook_url: '',
+        tiktok_url: '',
+        whatsapp_url: '',
         store_phone: '',
         store_address: '',
         store_hours: '',
@@ -36,6 +39,9 @@ export default function Settings() {
                     promo_banner_description: settings.promo_banner_description || DEFAULT_STORE_SETTINGS.promo_banner_description,
                     promo_banner_cta: settings.promo_banner_cta || DEFAULT_STORE_SETTINGS.promo_banner_cta,
                     instagram_url: settings.instagram_url || '',
+                    facebook_url: settings.facebook_url || DEFAULT_STORE_SETTINGS.facebook_url,
+                    tiktok_url: settings.tiktok_url || DEFAULT_STORE_SETTINGS.tiktok_url,
+                    whatsapp_url: settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url,
                     store_phone: settings.store_phone || '',
                     store_address: settings.store_address || '',
                     store_hours: settings.store_hours || '',
@@ -254,18 +260,71 @@ export default function Settings() {
                         />
                     </div>
 
-                    <div>
-                        <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
-                            URL Instagram
-                        </label>
-                        <input
-                            type="url"
-                            value={formData.instagram_url}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, instagram_url: e.target.value }))}
-                            className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
-                            style={{ fontSize: '14px' }}
-                            placeholder="https://www.instagram.com/..."
-                        />
+                    <div className="rounded-xl border border-[#F9D7DA] bg-[#FDE8EC] px-4 py-3">
+                        <h3 className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '15px' }}>
+                            Reseaux sociaux
+                        </h3>
+                        <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '12px' }}>
+                            Liens affiches dans le footer, le menu mobile et les pages de contact.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                URL Instagram
+                            </label>
+                            <input
+                                type="url"
+                                value={formData.instagram_url}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, instagram_url: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="https://www.instagram.com/..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                URL Facebook
+                            </label>
+                            <input
+                                type="url"
+                                value={formData.facebook_url}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, facebook_url: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="https://www.facebook.com/..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                URL TikTok
+                            </label>
+                            <input
+                                type="url"
+                                value={formData.tiktok_url}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, tiktok_url: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="https://www.tiktok.com/@..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
+                                WhatsApp
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.whatsapp_url}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, whatsapp_url: e.target.value }))}
+                                className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
+                                style={{ fontSize: '14px' }}
+                                placeholder="https://wa.me/213... ou +213..."
+                            />
+                        </div>
                     </div>
 
                     {statusMessage && (

@@ -233,7 +233,7 @@ export default function App() {
       <AnnouncementStrip text={storeSettings.announcement_text} />
 
       {/* Mobile menu */}
-      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} settings={storeSettings} />
 
       {/* Search modal */}
       <SearchModal

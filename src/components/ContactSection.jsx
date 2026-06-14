@@ -1,5 +1,5 @@
-import { MapPin, Phone, X } from 'lucide-react';
-import { DEFAULT_STORE_SETTINGS, getPhoneHref } from '../hooks/useStoreSettings';
+import { MapPin, MessageCircle, Phone, X } from 'lucide-react';
+import { DEFAULT_STORE_SETTINGS, getPhoneHref, getWhatsappHref } from '../hooks/useStoreSettings';
 
 function InstagramIcon({ size = 20, color = '#1C2340' }) {
   return (
@@ -16,6 +16,7 @@ const MAPS_URL = 'https://maps.app.goo.gl/ed64wpYFhfYRzWwg6';
 export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
   const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
   const phone = settings.store_phone || DEFAULT_STORE_SETTINGS.store_phone;
+  const whatsappUrl = getWhatsappHref(settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url, phone);
   const address = settings.store_address || DEFAULT_STORE_SETTINGS.store_address;
   const instagramLabel = instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
 
@@ -90,6 +91,29 @@ export default function ContactSection({ settings = DEFAULT_STORE_SETTINGS }) {
               </p>
               <p className="font-sans text-[#5A6080]" style={{ fontSize: '15px' }}>
                 {phone}
+              </p>
+            </div>
+          </a>
+
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            id="contact-whatsapp"
+            className="flex items-center gap-4 p-5 rounded-lg bg-[#FDE8EC] hover:bg-[#F9D7DA] transition-colors duration-200 group surface-lift"
+          >
+            <div
+              className="flex-none flex items-center justify-center rounded-full bg-white"
+              style={{ width: '48px', height: '48px' }}
+            >
+              <MessageCircle size={22} color="#1C2340" strokeWidth={1.8} />
+            </div>
+            <div>
+              <p className="font-sans font-semibold text-[#1C2340]" style={{ fontSize: '14px' }}>
+                WhatsApp
+              </p>
+              <p className="font-sans text-[#5A6080]" style={{ fontSize: '15px' }}>
+                Message direct
               </p>
             </div>
           </a>

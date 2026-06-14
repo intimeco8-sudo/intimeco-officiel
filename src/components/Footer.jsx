@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import InTimeLogo from './InTimeLogo';
-import { DEFAULT_STORE_SETTINGS } from '../hooks/useStoreSettings';
+import { DEFAULT_STORE_SETTINGS, getWhatsappHref } from '../hooks/useStoreSettings';
 
 function TikTokIcon({ size = 18, color = '#1C2340' }) {
   return (
@@ -28,6 +28,25 @@ function FacebookIcon({ size = 18, color = 'white' }) {
   );
 }
 
+function WhatsAppIcon({ size = 18, color = 'white' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5.25 18.75 6.1 15.6A7.25 7.25 0 1 1 8.45 18Z" />
+      <path d="M9.1 8.65c.18-.36.36-.4.62-.4h.5c.2 0 .38.12.46.31l.65 1.52c.08.22.04.43-.12.6l-.48.5a5.92 5.92 0 0 0 2.92 2.9l.5-.47c.17-.16.39-.2.6-.11l1.53.64c.2.08.32.26.32.47v.48c0 .31-.14.58-.4.75-.35.23-.88.42-1.52.39-2.88-.12-6.58-3.82-6.7-6.69-.03-.65.16-1.17.39-1.53.08-.13.16-.22.23-.26Z" />
+    </svg>
+  );
+}
+
 const NAV_LINKS = [
   { label: 'Accueil', href: '/#hero' },
   { label: 'Collections', href: '/#categories' },
@@ -45,6 +64,7 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
   const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
   const facebookUrl = settings.facebook_url || DEFAULT_STORE_SETTINGS.facebook_url;
   const tiktokUrl = settings.tiktok_url || DEFAULT_STORE_SETTINGS.tiktok_url;
+  const whatsappUrl = getWhatsappHref(settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url, settings.store_phone || DEFAULT_STORE_SETTINGS.store_phone);
 
   function handleSubscribe(e) {
     e.preventDefault();
@@ -166,6 +186,15 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
                 className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200"
               >
                 <TikTokIcon size={18} color="white" />
+              </a>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200"
+              >
+                <WhatsAppIcon size={18} color="white" />
               </a>
             </div>
           </div>

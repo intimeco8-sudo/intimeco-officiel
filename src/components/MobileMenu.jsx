@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import BotanicalSVG from './BotanicalSVG';
-import { DEFAULT_STORE_SETTINGS } from '../hooks/useStoreSettings';
+import { DEFAULT_STORE_SETTINGS, getWhatsappHref } from '../hooks/useStoreSettings';
 
 const NAV_LINKS = [
   { label: 'Accueil', href: '/#hero' },
@@ -39,8 +39,31 @@ function FacebookIcon({ size = 20, color = '#1C2340' }) {
   );
 }
 
-export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
+function WhatsAppIcon({ size = 20, color = '#1C2340' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5.25 18.75 6.1 15.6A7.25 7.25 0 1 1 8.45 18Z" />
+      <path d="M9.1 8.65c.18-.36.36-.4.62-.4h.5c.2 0 .38.12.46.31l.65 1.52c.08.22.04.43-.12.6l-.48.5a5.92 5.92 0 0 0 2.92 2.9l.5-.47c.17-.16.39-.2.6-.11l1.53.64c.2.08.32.26.32.47v.48c0 .31-.14.58-.4.75-.35.23-.88.42-1.52.39-2.88-.12-6.58-3.82-6.7-6.69-.03-.65.16-1.17.39-1.53.08-.13.16-.22.23-.26Z" />
+    </svg>
+  );
+}
+
+export default function MobileMenu({ isOpen, onClose, onLinkClick, settings = DEFAULT_STORE_SETTINGS }) {
   const firstLinkRef = useRef(null);
+  const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
+  const facebookUrl = settings.facebook_url || DEFAULT_STORE_SETTINGS.facebook_url;
+  const tiktokUrl = settings.tiktok_url || DEFAULT_STORE_SETTINGS.tiktok_url;
+  const whatsappUrl = getWhatsappHref(settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url, settings.store_phone || DEFAULT_STORE_SETTINGS.store_phone);
 
   useEffect(() => {
     if (isOpen) {
@@ -136,7 +159,7 @@ export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
           <div className="h-px bg-[#F9D7DA] mb-6" />
           <div className="flex items-center gap-5">
             <a
-              href="https://www.instagram.com/inti.me15"
+              href={instagramUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -145,7 +168,7 @@ export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
               <InstagramIcon size={20} color="#1C2340" />
             </a>
             <a
-              href={DEFAULT_STORE_SETTINGS.facebook_url}
+              href={facebookUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -154,13 +177,22 @@ export default function MobileMenu({ isOpen, onClose, onLinkClick }) {
               <FacebookIcon size={20} color="#1C2340" />
             </a>
             <a
-              href={DEFAULT_STORE_SETTINGS.tiktok_url}
+              href={tiktokUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
               className="flex items-center justify-center w-11 h-11 rounded-full bg-[#FDE8EC] hover:bg-[#F5C6CB] transition-colors duration-200"
             >
               <TikTokIcon size={20} color="#1C2340" />
+            </a>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="WhatsApp"
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-[#FDE8EC] hover:bg-[#F5C6CB] transition-colors duration-200"
+            >
+              <WhatsAppIcon size={20} color="#1C2340" />
             </a>
           </div>
         </div>

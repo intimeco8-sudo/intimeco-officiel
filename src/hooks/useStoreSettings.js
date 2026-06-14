@@ -13,6 +13,7 @@ export const DEFAULT_STORE_SETTINGS = {
     instagram_url: 'https://www.instagram.com/inti.me15',
     facebook_url: 'https://www.facebook.com/profile.php?id=61581260086475',
     tiktok_url: 'https://www.tiktok.com/@intime.co2?is_from_webapp=1&sender_device=pc',
+    whatsapp_url: '',
     store_phone: '+213 555 00 00 00',
     store_address: 'Draa El Mizan, Tizi Ouzou, Algerie',
     store_hours: 'Lun-Sam : 09h00 - 19h00',
@@ -26,6 +27,15 @@ export function getNumberSetting(settings, key, fallback) {
 export function getPhoneHref(phone) {
     const cleaned = String(phone || '').replace(/[^\d+]/g, '');
     return cleaned ? `tel:${cleaned}` : '#contact';
+}
+
+export function getWhatsappHref(whatsapp, fallbackPhone) {
+    const value = String(whatsapp || '').trim();
+    if (/^https?:\/\//i.test(value)) return value;
+
+    const phone = value || fallbackPhone;
+    const digits = String(phone || '').replace(/\D/g, '');
+    return digits ? `https://wa.me/${digits}` : '#contact';
 }
 
 export default function useStoreSettings() {

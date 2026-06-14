@@ -1,5 +1,5 @@
-import { Clock, ExternalLink, MapPin, Phone, ShoppingBag } from 'lucide-react';
-import { DEFAULT_STORE_SETTINGS, getPhoneHref } from '../hooks/useStoreSettings';
+import { Clock, ExternalLink, MapPin, MessageCircle, Phone, ShoppingBag } from 'lucide-react';
+import { DEFAULT_STORE_SETTINGS, getPhoneHref, getWhatsappHref } from '../hooks/useStoreSettings';
 
 const MAPS_URL = 'https://maps.app.goo.gl/ed64wpYFhfYRzWwg6';
 const MAP_COORDS = '36.5381866,3.8321025';
@@ -20,6 +20,7 @@ export default function StoreBoutique({ settings = DEFAULT_STORE_SETTINGS }) {
   const address = settings.store_address || DEFAULT_STORE_SETTINGS.store_address;
   const hours = settings.store_hours || DEFAULT_STORE_SETTINGS.store_hours;
   const phone = settings.store_phone || DEFAULT_STORE_SETTINGS.store_phone;
+  const whatsappUrl = getWhatsappHref(settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url, phone);
   const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
   const instagramLabel = instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//, '@').replace(/\/$/, '');
 
@@ -75,7 +76,7 @@ export default function StoreBoutique({ settings = DEFAULT_STORE_SETTINGS }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <a
                 href={instagramUrl}
                 target="_blank"
@@ -103,6 +104,22 @@ export default function StoreBoutique({ settings = DEFAULT_STORE_SETTINGS }) {
                 </p>
                 <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '15px' }}>
                   {phone}
+                </p>
+              </a>
+
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white rounded-lg p-5 surface-lift hover:bg-[#FDE8EC] transition-colors"
+                data-reveal="soft"
+              >
+                <MessageCircle size={22} color="#1C2340" strokeWidth={1.8} />
+                <p className="font-sans font-semibold text-[#1C2340] mt-4" style={{ fontSize: '14px' }}>
+                  WhatsApp
+                </p>
+                <p className="font-sans text-[#5A6080] mt-1" style={{ fontSize: '15px' }}>
+                  Message direct
                 </p>
               </a>
             </div>
