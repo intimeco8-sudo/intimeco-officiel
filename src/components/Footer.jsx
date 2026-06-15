@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import InTimeLogo from './InTimeLogo';
 import { DEFAULT_STORE_SETTINGS, getWhatsappHref } from '../hooks/useStoreSettings';
 
@@ -57,22 +56,13 @@ const NAV_LINKS = [
 ];
 
 export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
   const storeName = settings.store_name || DEFAULT_STORE_SETTINGS.store_name;
   const address = settings.store_address || DEFAULT_STORE_SETTINGS.store_address;
   const instagramUrl = settings.instagram_url || DEFAULT_STORE_SETTINGS.instagram_url;
   const facebookUrl = settings.facebook_url || DEFAULT_STORE_SETTINGS.facebook_url;
   const tiktokUrl = settings.tiktok_url || DEFAULT_STORE_SETTINGS.tiktok_url;
   const whatsappUrl = getWhatsappHref(settings.whatsapp_url || DEFAULT_STORE_SETTINGS.whatsapp_url, settings.store_phone || DEFAULT_STORE_SETTINGS.store_phone);
-
-  function handleSubscribe(e) {
-    e.preventDefault();
-    if (email.trim()) {
-      setSubscribed(true);
-      setEmail('');
-    }
-  }
+  const developerWhatsappUrl = 'https://wa.me/213561791087';
 
   return (
     <footer className="bg-[#11162B] text-white pt-12 pb-6 px-4">
@@ -123,40 +113,24 @@ export default function Footer({ settings = DEFAULT_STORE_SETTINGS }) {
             </ul>
           </div>
 
-          {/* Column 3: Newsletter + socials */}
+          {/* Column 3: Developer + socials */}
           <div>
             <h3
               className="font-serif text-white mb-4"
               style={{ fontSize: '15px', fontWeight: 600, letterSpacing: '0.06em' }}
             >
-              Restez informee
+              Developpeur principal
             </h3>
-            {subscribed ? (
-              <p className="font-sans text-[#EBB4BB]" style={{ fontSize: '14px' }}>
-                Merci pour votre inscription !
-              </p>
-            ) : (
-              <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Votre adresse e-mail"
-                  aria-label="Adresse e-mail pour la newsletter"
-                  required
-                  className="w-full border border-white/20 rounded-xl px-4 bg-white/10 text-white placeholder-white/40 outline-none focus:border-[#EBB4BB] transition-colors"
-                  style={{ height: '48px', fontSize: '14px' }}
-                />
-                <button
-                  id="footer-newsletter-btn"
-                  type="submit"
-                  className="w-full bg-[#F9D7DA] text-[#1C2340] font-sans font-semibold rounded-xl hover:bg-white transition-colors duration-200"
-                  style={{ height: '48px', fontSize: '14px' }}
-                >
-                  S&apos;inscrire
-                </button>
-              </form>
-            )}
+            <a
+              href={developerWhatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-sans inline-flex flex-col gap-1 text-white/70 hover:text-white transition-colors duration-200"
+              style={{ fontSize: '14px' }}
+            >
+              <span className="text-white">Nassim Moussaoui</span>
+              <span>rsndev</span>
+            </a>
 
             {/* Social icons */}
             <div className="flex items-center gap-3 mt-5">
