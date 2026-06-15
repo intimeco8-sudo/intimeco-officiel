@@ -1,32 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, Heart, Minus, Plus, ChevronDown } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Heart, Minus, Plus } from 'lucide-react';
 import { PRODUCT_IMAGE_PLACEHOLDER } from '../utils/productImages';
 import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } from '../utils/productVariants';
 
-function Accordion({ title, children }) {
-  const [open, setOpen] = useState(false);
+function DetailSection({ title, children }) {
   return (
-    <div className="border-b border-[#F9D7DA]">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between py-4 font-sans font-semibold text-[#1C2340] text-left"
-        style={{ fontSize: '14px' }}
-        aria-expanded={open}
-      >
+    <section className="border-b border-[#F9D7DA] py-4">
+      <h2 className="font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
         {title}
-        <ChevronDown
-          size={18}
-          color="#1C2340"
-          strokeWidth={1.8}
-          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease' }}
-        />
-      </button>
-      {open && (
-        <div className="pb-4 font-sans text-[#5A6080] leading-relaxed" style={{ fontSize: '14px' }}>
-          {children}
-        </div>
-      )}
-    </div>
+      </h2>
+      <div className="font-sans text-[#5A6080] leading-relaxed" style={{ fontSize: '14px' }}>
+        {children}
+      </div>
+    </section>
   );
 }
 
@@ -221,11 +207,6 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             </div>
           </div>
 
-          {/* Short description */}
-          <p className="font-sans text-[#5A6080] leading-relaxed" style={{ fontSize: '14px' }}>
-            {product.description}
-          </p>
-
           {/* Sizes */}
           <div>
             <p className="font-sans font-semibold text-[#1C2340] mb-2" style={{ fontSize: '14px' }}>
@@ -282,6 +263,19 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
                 />
               ))}
             </div>
+          </div>
+
+          {/* Product details */}
+          <div>
+            <DetailSection title="Description">
+              <p>{product.description}</p>
+            </DetailSection>
+            <DetailSection title="Composition et entretien">
+              <p>{product.details}</p>
+            </DetailSection>
+            <DetailSection title="Livraison et retours">
+              <p>Livraison disponible partout en Algerie par paiement a la livraison. Les retours sont acceptes sous 7 jours apres reception.</p>
+            </DetailSection>
           </div>
 
           {/* Quantity */}
@@ -356,18 +350,6 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             </button>
           </div>
 
-          {/* Accordion details */}
-          <div className="pt-2">
-            <Accordion title="Description">
-              <p>{product.description}</p>
-            </Accordion>
-            <Accordion title="Composition et entretien">
-              <p>{product.details}</p>
-            </Accordion>
-            <Accordion title="Livraison et retours">
-              <p>Livraison disponible partout en Algerie par paiement a la livraison. Les retours sont acceptes sous 7 jours apres reception.</p>
-            </Accordion>
-          </div>
         </div>
       </div>
 
