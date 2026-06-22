@@ -121,6 +121,19 @@ export function getVariantStock(product, color, size) {
   return Number.parseInt(variant.stockBySize?.[size], 10) || 0;
 }
 
+export function getProductTotalStock(product) {
+  const hasVariants = Array.isArray(product?.variant_options) && product.variant_options.length > 0;
+
+  if (!hasVariants) {
+    return Number.parseInt(product?.stock, 10) || 0;
+  }
+
+  return normalizeProductVariants(product).reduce((total, variant) => {
+    const stockBySize = variant?.stockBySize && typeof variant.stockBySize === 'object' ? variant.stockBySize : {};
+    return total + Object.values(stockBySize).reduce((sum, value) => sum + (Number.parseInt(value, 10) || 0), 0);
+  }, 0);
+}
+
 export function getTotalVariantStock(variants = []) {
   return variants.reduce((total, variant) => {
     const stockBySize = variant?.stockBySize && typeof variant.stockBySize === 'object' ? variant.stockBySize : {};

@@ -29,12 +29,23 @@ export function getPhoneHref(phone) {
     return cleaned ? `tel:${cleaned}` : '#contact';
 }
 
+function getWhatsappNumber(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+
+    if (!digits) return '';
+    if (digits.startsWith('00')) return digits.slice(2);
+    if (digits.startsWith('0') && digits.length === 10) return `213${digits.slice(1)}`;
+    return digits;
+}
+
 export function getWhatsappHref(whatsapp, fallbackPhone) {
     const value = String(whatsapp || '').trim();
+    const numberFromUrl = /^https?:\/\//i.test(value) ? getWhatsappNumber(value) : '';
+    if (numberFromUrl) return `https://wa.me/${numberFromUrl}`;
     if (/^https?:\/\//i.test(value)) return value;
 
     const phone = value || fallbackPhone;
-    const digits = String(phone || '').replace(/\D/g, '');
+    const digits = getWhatsappNumber(phone);
     return digits ? `https://wa.me/${digits}` : '#contact';
 }
 

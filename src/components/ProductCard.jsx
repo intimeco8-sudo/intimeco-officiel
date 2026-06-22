@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
 import { getProductImage } from '../utils/productImages';
-import { getProductColorOptions } from '../utils/productVariants';
+import { getProductColorOptions, getProductTotalStock } from '../utils/productVariants';
 
 function BadgeChip({ badge }) {
   if (!badge) return null;
@@ -28,6 +28,7 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
   const [heartPulsing, setHeartPulsing] = useState(false);
   const productImage = getProductImage(product);
   const colors = getProductColorOptions(product);
+  const isOutOfStock = getProductTotalStock(product) <= 0;
 
   function handleWishlist(e) {
     e.stopPropagation();
@@ -38,6 +39,7 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
 
   function handleAddToCart(e) {
     e.stopPropagation();
+    if (isOutOfStock) return;
     onAddToCart(product);
   }
 
@@ -66,6 +68,23 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
 
         {/* Badge */}
         <BadgeChip badge={product.badge} />
+
+        {isOutOfStock && (
+          <span
+            className="absolute bottom-2 left-2 z-10 font-sans font-semibold rounded-md px-2"
+            style={{
+              fontSize: '11px',
+              height: '22px',
+              lineHeight: '22px',
+              letterSpacing: '0.06em',
+              background: '#1C2340',
+              color: '#fff',
+              textTransform: 'uppercase',
+            }}
+          >
+            Rupture de stock
+          </span>
+        )}
 
         {/* Wishlist button */}
         <button
@@ -135,9 +154,10 @@ export default function ProductCard({ product, onAddToCart, onWishlist, isWishli
           {/* Quick add button */}
           <button
             id={`quick-add-${product.id}`}
-            aria-label={`Ajouter au panier — ${product.name}`}
+            aria-label={isOutOfStock ? `${product.name} en rupture de stock` : `Ajouter au panier — ${product.name}`}
             onClick={handleAddToCart}
-            className="flex items-center justify-center rounded-full bg-[#1C2340] hover:bg-[#2D375F] active:scale-90 transition-all duration-200"
+            disabled={isOutOfStock}
+            className="flex items-center justify-center rounded-full bg-[#1C2340] hover:bg-[#2D375F] active:scale-90 transition-all duration-200 disabled:cursor-not-allowed disabled:bg-[#9CA3AF] disabled:opacity-70"
             style={{ width: '34px', height: '34px', flexShrink: 0 }}
           >
             <ShoppingBag size={15} color="white" strokeWidth={1.8} />

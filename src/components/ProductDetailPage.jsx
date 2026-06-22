@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Heart, Minus, Plus } from 'lucide-react';
 import { PRODUCT_IMAGE_PLACEHOLDER } from '../utils/productImages';
-import { getAvailableSizesForColor, getProductColorOptions, getVariantStock } from '../utils/productVariants';
+import { getAvailableSizesForColor, getProductColorOptions, getProductTotalStock, getVariantStock } from '../utils/productVariants';
 
 function DetailSection({ title, children }) {
   return (
@@ -69,6 +69,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
   const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
   const availableSizes = selectedColor ? getAvailableSizesForColor(product, selectedColor) : productSizes;
   const selectedStock = getVariantStock(product, selectedColor, selectedSize);
+  const isOutOfStock = getProductTotalStock(product) <= 0;
   const canAddToCart = Boolean(selectedColor && selectedSize && selectedStock > 0 && qty <= selectedStock);
 
   function handleWishlist() {
@@ -187,6 +188,22 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
                 }}
               >
                 {product.badge === 'promo' ? 'Promo' : 'Nouveau'}
+              </span>
+            )}
+            {isOutOfStock && (
+              <span
+                className="inline-block font-sans font-semibold rounded-md px-2 mb-2"
+                style={{
+                  fontSize: '11px',
+                  height: '20px',
+                  lineHeight: '20px',
+                  letterSpacing: '0.06em',
+                  background: '#1C2340',
+                  color: '#fff',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Rupture de stock
               </span>
             )}
             <h1
@@ -326,7 +343,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
               className="w-full bg-[#1C2340] text-white font-sans font-semibold rounded-full hover:bg-[#2D375F] transition-colors duration-200 disabled:opacity-50"
               style={{ height: '52px', fontSize: '15px', letterSpacing: '0.04em' }}
             >
-              {canAddToCart ? 'Ajouter au panier' : 'Choisissez couleur et taille'}
+              {canAddToCart ? 'Ajouter au panier' : isOutOfStock ? 'Rupture de stock' : 'Choisissez couleur et taille'}
             </button>
             <button
               id="detail-add-to-favorites"
@@ -375,7 +392,7 @@ export default function ProductDetailPage({ product, onClose, onAddToCart, onWis
             className="flex-1 max-w-[200px] bg-[#1C2340] text-white font-sans font-semibold rounded-full disabled:opacity-50"
             style={{ height: '48px', fontSize: '14px' }}
           >
-            {canAddToCart ? 'Ajouter au panier' : 'Choisissez couleur et taille'}
+            {canAddToCart ? 'Ajouter au panier' : isOutOfStock ? 'Rupture de stock' : 'Choisissez couleur et taille'}
           </button>
         </div>
       )}
