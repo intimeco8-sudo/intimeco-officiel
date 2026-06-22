@@ -1,5 +1,6 @@
 import { supabase } from './client';
 import { deleteProductImages } from './storage';
+import { getCategoryGroupByFilterId, matchesCategoryFilter } from '../utils/categories';
 import { getProductVariantImages } from '../utils/productVariants';
 import fallbackProducts from '../data/products.json';
 
@@ -76,7 +77,7 @@ function applyLocalFilters(products, options = {}) {
     }
 
     if (category && category !== 'Tout') {
-        list = list.filter((product) => product.category === category);
+        list = list.filter((product) => matchesCategoryFilter(product.category, category));
     }
 
     list = list.filter((product) => product.price >= minPrice && product.price <= maxPrice);
@@ -170,7 +171,10 @@ export async function fetchProducts({
     }
 
     if (category && category !== 'Tout') {
-        query = query.eq('category', category);
+        const group = getCategoryGroupByFilterId(category);
+        query = group
+            ? query.in('category', group.subcategories.map((subcategory) => subcategory.id))
+            : query.eq('category', category);
     }
 
     query = query.gte('price', minPrice).lte('price', maxPrice);

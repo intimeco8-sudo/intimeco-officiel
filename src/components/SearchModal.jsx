@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, X } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { fetchProducts, getInitialProducts } from '../supabase/products';
+import { CATEGORY_GROUPS, getCategoryDisplayName, getCategoryGroupId } from '../utils/categories';
 
 export default function SearchModal({ isOpen, onClose, onAddToCart, onWishlist, wishlist, onCardClick }) {
   const [query, setQuery] = useState('');
@@ -42,11 +43,17 @@ export default function SearchModal({ isOpen, onClose, onAddToCart, onWishlist, 
   }, [isOpen, onClose]);
 
   const results = query.trim().length >= 2
-    ? products.filter((p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.category.toLowerCase().includes(query.toLowerCase()) ||
-      p.colors.some((c) => c.toLowerCase().includes(query.toLowerCase()))
-    )
+    ? products.filter((p) => {
+      const normalizedQuery = query.toLowerCase();
+      const group = CATEGORY_GROUPS.find((item) => item.id === getCategoryGroupId(p.category));
+      return (
+        p.name.toLowerCase().includes(normalizedQuery) ||
+        p.category.toLowerCase().includes(normalizedQuery) ||
+        getCategoryDisplayName(p.category).toLowerCase().includes(normalizedQuery) ||
+        group?.label.toLowerCase().includes(normalizedQuery) ||
+        p.colors.some((c) => c.toLowerCase().includes(normalizedQuery))
+      );
+    })
     : [];
 
   return (
@@ -106,14 +113,14 @@ export default function SearchModal({ isOpen, onClose, onAddToCart, onWishlist, 
               </p>
               {/* Quick category links */}
               <div className="flex flex-wrap gap-2 justify-center mt-5">
-                {['Soutien-gorge', 'Ensembles', 'Pyjamas', 'Culottes&Strings', 'Corsets', 'Nuisettes', 'Other'].map((c) => (
+                {[...CATEGORY_GROUPS, ...CATEGORY_GROUPS.flatMap((group) => group.subcategories)].map((c) => (
                   <button
-                    key={c}
-                    onClick={() => setQuery(c)}
+                    key={c.id}
+                    onClick={() => setQuery(c.label)}
                     className="rounded-full border border-[#EBB4BB] font-sans text-[#1C2340] px-4 hover:bg-[#FDE8EC] transition-colors"
                     style={{ height: '34px', fontSize: '13px' }}
                   >
-                    {c}
+                    {c.label}
                   </button>
                 ))}
               </div>

@@ -177,7 +177,7 @@ export default function App() {
     setActiveCategoryFilter(cat);
     if (cat) {
       const el = document.getElementById('catalog');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) el.scrollIntoView({ behavior: 'auto', block: 'start' });
     }
   }
 

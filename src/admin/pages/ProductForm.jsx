@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { X, Upload, Trash2 } from 'lucide-react';
 import { createProduct, updateProduct } from '../../supabase/products';
 import { uploadProductImage, deleteProductImage } from '../../supabase/storage';
+import { CATEGORY_GROUPS, CATEGORY_OPTIONS } from '../../utils/categories';
 import { COLOR_PALETTE, getColorMeta, getTotalVariantStock, normalizeProductVariants } from '../../utils/productVariants';
 
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', '85B', '90C', '95D'];
-const CATEGORIES = ['Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
 
 function createVariant(color, sizes = []) {
     const meta = getColorMeta(color);
@@ -51,7 +51,7 @@ function restoreScrollPosition(container, scrollTop) {
 export default function ProductForm({ product, onClose }) {
     const [formData, setFormData] = useState({
         name: product?.name || '',
-        category: product?.category || 'Soutien-gorge',
+        category: product?.category || CATEGORY_OPTIONS[0]?.id || 'Culottes&Strings',
         description: product?.description || '',
         price: product?.price || '',
         original_price: product?.original_price || '',
@@ -325,10 +325,14 @@ export default function ProductForm({ product, onClose }) {
                                     className="w-full border border-[#EBB4BB] rounded-lg px-4 py-3 font-sans text-[#1C2340] outline-none focus:border-[#1C2340]"
                                     style={{ fontSize: '14px' }}
                                 >
-                                    {CATEGORIES.map((cat) => (
-                                        <option key={cat} value={cat}>
-                                            {cat}
-                                        </option>
+                                    {CATEGORY_GROUPS.map((group) => (
+                                        <optgroup key={group.id} label={group.label}>
+                                            {group.subcategories.map((cat) => (
+                                                <option key={cat.id} value={cat.id}>
+                                                    {cat.label}
+                                                </option>
+                                            ))}
+                                        </optgroup>
                                     ))}
                                 </select>
                             </div>

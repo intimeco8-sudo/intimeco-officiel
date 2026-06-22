@@ -1,58 +1,37 @@
 
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { CATEGORY_GROUPS, getMainCategoryFilterId } from '../utils/categories';
 
 const CATEGORIES = [
   {
-    id: 'Soutien-gorge',
-    label: 'Soutien-gorge',
-    kicker: 'Maintien delicat',
+    id: getMainCategoryFilterId('sous-vetements'),
+    groupId: 'sous-vetements',
+    label: 'Sous vetements',
+    kicker: 'Essentiels intimes',
     bg: 'linear-gradient(135deg, #F5C6CB 0%, #FFF7F8 100%)',
     accent: '#1C2340',
   },
   {
-    id: 'Ensembles',
-    label: 'Ensembles',
-    kicker: 'Looks coordonnes',
+    id: getMainCategoryFilterId('tenues-de-nuit'),
+    groupId: 'tenues-de-nuit',
+    label: 'Tenues de nuit',
+    kicker: 'Douceur du soir',
     bg: 'linear-gradient(135deg, #1C2340 0%, #5A6080 100%)',
     accent: '#F9D7DA',
   },
   {
-    id: 'Culottes&Strings',
-    label: 'Culottes & Strings',
-    kicker: 'Essentiels invisibles',
+    id: getMainCategoryFilterId('others'),
+    groupId: 'others',
+    label: 'Others',
+    kicker: 'Pieces speciales',
     bg: 'linear-gradient(135deg, #FFF7F8 0%, #EBB4BB 100%)',
     accent: '#1C2340',
   },
-  {
-    id: 'Pyjamas',
-    label: 'Pyjamas',
-    kicker: 'Douceur du soir',
-    bg: 'linear-gradient(135deg, #F9D7DA 0%, #F5C6CB 100%)',
-    accent: '#1C2340',
-  },
-  {
-    id: 'Nuisettes',
-    label: 'Nuisettes',
-    kicker: 'Satin et dentelle',
-    bg: 'linear-gradient(135deg, #2D375F 0%, #1C2340 100%)',
-    accent: '#FDE8EC',
-  },
-  {
-    id: 'Corsets',
-    label: 'Corsets',
-    kicker: 'Silhouette structuree',
-    bg: 'linear-gradient(135deg, #FDE8EC 0%, #EBB4BB 100%)',
-    accent: '#1C2340',
-  },
-  {
-    id: 'Other',
-    label: 'Other',
-    kicker: 'Pieces speciales',
-    bg: 'linear-gradient(135deg, #FFFFFF 0%, #F5C6CB 100%)',
-    accent: '#1C2340',
-  },
-];
+].map((category) => ({
+  ...category,
+  subcategories: CATEGORY_GROUPS.find((group) => group.id === category.groupId)?.subcategories || [],
+}));
 
 export default function CategoryTiles({ onCategorySelect, activeCategory }) {
   const trackRef = useRef(null);
@@ -138,6 +117,16 @@ export default function CategoryTiles({ onCategorySelect, activeCategory }) {
                   >
                     {cat.label}
                   </h3>
+                  <p
+                    className="font-sans mt-2"
+                    style={{
+                      fontSize: '12px',
+                      color: cat.accent,
+                      opacity: 0.78,
+                    }}
+                  >
+                    {cat.subcategories.map((subcategory) => subcategory.label).join(' / ')}
+                  </p>
                 </div>
               </div>
             </div>

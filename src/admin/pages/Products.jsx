@@ -3,6 +3,12 @@ import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import { fetchProducts, toggleProductActive, deleteProduct, subscribeToProducts } from '../../supabase/products';
 import { getProductImage } from '../../utils/productImages';
 import { normalizeProductVariants } from '../../utils/productVariants';
+import {
+    CATEGORY_GROUPS,
+    getCategoryDisplayName,
+    getMainCategoryFilterId,
+    matchesCategoryFilter,
+} from '../../utils/categories';
 import ProductForm from './ProductForm';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -102,13 +108,17 @@ export default function Products() {
     const loadProducts = async () => {
         try {
             const onlyActive = activeFilter === 'actif' ? true : activeFilter === 'inactif' ? false : null;
+            const isMainCategoryFilter = categoryFilter.startsWith('main:');
             const data = await fetchProducts({
-                category: categoryFilter || null,
+                category: categoryFilter && !isMainCategoryFilter ? categoryFilter : null,
                 onlyActive,
                 limit: 1000,
             });
 
             let filtered = data.products;
+            if (isMainCategoryFilter) {
+                filtered = filtered.filter((product) => matchesCategoryFilter(product.category, categoryFilter));
+            }
             if (searchQuery) {
                 filtered = filtered.filter((p) =>
                     p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -259,13 +269,18 @@ export default function Products() {
                             style={{ fontSize: '14px' }}
                         >
                             <option value="">Toutes les categories</option>
-                            <option value="Soutien-gorge">Soutien-gorge</option>
-                            <option value="Ensembles">Ensembles</option>
-                            <option value="Culottes&Strings">Culottes&Strings</option>
-                            <option value="Pyjamas">Pyjamas</option>
-                            <option value="Nuisettes">Nuisettes</option>
-                            <option value="Corsets">Corsets</option>
-                            <option value="Other">Other</option>
+                            {CATEGORY_GROUPS.map((group) => (
+                                <optgroup key={group.id} label={group.label}>
+                                    <option value={getMainCategoryFilterId(group.id)}>
+                                        Toutes - {group.label}
+                                    </option>
+                                    {group.subcategories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.label}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            ))}
                         </select>
 
                         <select
@@ -305,7 +320,7 @@ export default function Products() {
                                                     {product.name}
                                                 </h3>
                                                 <p className="font-sans text-[#5A6080]" style={{ fontSize: '13px' }}>
-                                                    {product.category}
+                                                    {getCategoryDisplayName(product.category)}
                                                 </p>
                                             </div>
                                             <ProductActions product={product} />
@@ -371,7 +386,7 @@ export default function Products() {
                                             {product.name}
                                         </td>
                                         <td className="font-sans text-[#5A6080] py-3 px-2" style={{ fontSize: '14px' }}>
-                                            {product.category}
+                                            {getCategoryDisplayName(product.category)}
                                         </td>
                                         <td className="font-sans font-semibold text-right text-[#1C2340] py-3 px-2" style={{ fontSize: '14px' }}>
                                             {parseFloat(product.price).toLocaleString('fr-DZ')} DZD

@@ -2,9 +2,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
 import ProductCard from './ProductCard';
 import { fetchProducts, getInitialProducts } from '../supabase/products';
+import {
+  ALL_CATEGORY_FILTER,
+  MAIN_CATEGORY_FILTERS,
+  getCategoryDisplayName,
+  getCategoryGroupByFilterId,
+  matchesCategoryFilter,
+} from '../utils/categories';
 import { COLOR_PALETTE, getProductColorOptions } from '../utils/productVariants';
 
-const CATEGORIES = ['Tout', 'Soutien-gorge', 'Ensembles', 'Culottes&Strings', 'Pyjamas', 'Nuisettes', 'Corsets', 'Other'];
+const MAIN_CATEGORIES = [ALL_CATEGORY_FILTER, ...MAIN_CATEGORY_FILTERS];
 const SORT_OPTIONS = [
   { label: 'Nouveautes', value: 'new' },
   { label: 'Prix croissant', value: 'price-asc' },
@@ -195,7 +202,7 @@ export default function ProductCatalog({
   onCardClick,
   initialCategory,
 }) {
-  const [activeCategory, setActiveCategory] = useState(initialCategory || 'Tout');
+  const [activeCategory, setActiveCategory] = useState(initialCategory || ALL_CATEGORY_FILTER.id);
   const [activeSort, setActiveSort] = useState('new');
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [advFilters, setAdvFilters] = useState({ priceMax: null, sizes: [], colors: [] });
@@ -216,15 +223,15 @@ export default function ProductCatalog({
 
   // Sync external category changes
   useEffect(() => {
-    if (initialCategory) setActiveCategory(initialCategory);
+    setActiveCategory(initialCategory || ALL_CATEGORY_FILTER.id);
   }, [initialCategory]);
 
   const filtered = useMemo(() => {
     let list = [...products];
 
     // Category
-    if (activeCategory !== 'Tout') {
-      list = list.filter((p) => p.category === activeCategory);
+    if (activeCategory !== ALL_CATEGORY_FILTER.id) {
+      list = list.filter((p) => matchesCategoryFilter(p.category, activeCategory));
     }
 
     // Advanced filters
@@ -272,6 +279,8 @@ export default function ProductCatalog({
 
   const maxCatalogPrice = Math.max(10000, ...products.map((p) => Number(p.price) || 0));
   const hasActiveFilters = advFilters.sizes.length > 0 || advFilters.colors.length > 0 || advFilters.priceMax !== null;
+  const activeGroup = getCategoryGroupByFilterId(activeCategory);
+  const visibleSubcategories = activeGroup?.subcategories || [];
 
   return (
     <section id="catalog" className="py-12 max-w-screen-xl mx-auto px-4">
@@ -314,13 +323,14 @@ export default function ProductCatalog({
 
         {/* Category chips */}
         <div className="flex items-center gap-2 flex-none">
-          {CATEGORIES.map((cat) => {
-            const active = activeCategory === cat;
+          {MAIN_CATEGORIES.map((cat) => {
+            const selectedGroup = getCategoryGroupByFilterId(activeCategory);
+            const active = activeCategory === cat.id || (!!cat.groupId && selectedGroup?.id === cat.groupId);
             return (
               <button
-                key={cat}
-                id={`filter-cat-${cat.toLowerCase()}`}
-                onClick={() => setActiveCategory(cat)}
+                key={cat.id}
+                id={`filter-cat-${cat.id.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                onClick={() => setActiveCategory(cat.id)}
                 className="flex-none rounded-full border font-sans font-medium transition-all duration-150"
                 style={{
                   padding: '8px 16px',
@@ -333,7 +343,7 @@ export default function ProductCatalog({
                 }}
                 aria-pressed={active}
               >
-                {cat}
+                {cat.label}
               </button>
             );
           })}
@@ -367,6 +377,35 @@ export default function ProductCatalog({
         </div>
       </div>
 
+      {visibleSubcategories.length > 1 && (
+        <div className="flex items-center gap-2 mb-5 overflow-x-auto scrollbar-hide pb-1" data-reveal="soft">
+          {visibleSubcategories.map((subcategory) => {
+            const active = activeCategory === subcategory.id;
+            return (
+              <button
+                key={subcategory.id}
+                id={`filter-subcat-${subcategory.id.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                onClick={() => setActiveCategory(subcategory.id)}
+                className="flex-none rounded-full border font-sans font-medium transition-all duration-150"
+                style={{
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  height: '34px',
+                  background: active ? '#B56A78' : '#FFF7F8',
+                  color: active ? '#FFFFFF' : '#8F4A58',
+                  borderColor: active ? '#B56A78' : '#F5C6CB',
+                  whiteSpace: 'nowrap',
+                  boxShadow: active ? '0 4px 12px rgba(181,106,120,0.22)' : 'none',
+                }}
+                aria-pressed={active}
+              >
+                {getCategoryDisplayName(subcategory.id)}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Count */}
       <p className="font-sans text-[#9CA3AF] mb-4" style={{ fontSize: '13px' }}>
         {filtered.length} produit{filtered.length !== 1 ? 's' : ''}
@@ -379,7 +418,7 @@ export default function ProductCatalog({
             Aucun produit ne correspond aux filtres
           </p>
           <button
-            onClick={() => { setActiveCategory('Tout'); setAdvFilters({ priceMax: null, sizes: [], colors: [] }); }}
+            onClick={() => { setActiveCategory(ALL_CATEGORY_FILTER.id); setAdvFilters({ priceMax: null, sizes: [], colors: [] }); }}
             className="mt-4 font-sans text-[#1C2340] underline"
             style={{ fontSize: '14px' }}
           >
@@ -388,11 +427,9 @@ export default function ProductCatalog({
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filtered.map((product, index) => (
+          {filtered.map((product) => (
             <div
               key={product.id}
-              className={`stagger-${Math.min((index % 6) + 1, 5)}`}
-              data-reveal="soft"
             >
               <ProductCard
                 product={product}
